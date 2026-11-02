@@ -2039,7 +2039,7 @@ Interface.ThemeManager.BuiltInThemes = {
 
 -- Палитра FeatherHub по умолчанию; сохранённая тема загружается позже.
 do
-    local Palette = { FontColor = "e7edf7", MainColor = "182235", AccentColor = "7dd3fc", BackgroundColor = "101827", OutlineColor = "2d405b", FontFace = "Gotham" }
+    local Palette = { FontColor = "eaf0fb", MainColor = "162035", AccentColor = "7dd3fc", BackgroundColor = "0e1625", OutlineColor = "2a3d5a", FontFace = "Gotham" }
     Interface.ThemeManager.BuiltInThemes["FeatherHub"] = { 0, Palette }
     Interface.ThemeManager:SetLibrary(Interface.Library)
     Interface.ThemeManager:ApplyThemeData(Palette)
@@ -2075,26 +2075,29 @@ Interface.ApplyInfoTab = function(Window)
     local CreditsBox = InfoTab:AddRightGroupbox("Благодарности")
     -- Подпись Feather и благодарность пользователю.
     local Credits = {
-        "<font color='rgb(125, 211, 252)'>Feather - Scripter</font>",
-        "<font color='rgb(50, 205, 50)'>" .. LocalPlayer.Name .. " — Спасибо за использование скрипта</font>",
+        "<font color='rgb(125, 211, 252)'><b>Feather</b> — Scripter</font>",
+        "<font color='rgb(100, 116, 139)'>─────────────────</font>",
+        "<font color='rgb(52, 211, 153)'>" .. LocalPlayer.Name .. "</font> <font color='rgb(100, 116, 139)'>— спасибо за использование</font>",
     }
     for _, Credit in ipairs(Credits) do CreditsBox:AddLabel(Credit, true) end
 
     local ChangelogBox = InfoTab:AddRightGroupbox("История изменений")
-    -- MODIFIED: Removed creator references from changelog
     local Changelog = {
-        "<font color='rgb(0, 255, 0)'>+ Создано Feather</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлена вкладка «Лестница»</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлена защита от повторного запуска</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлена игрушка Sally в список предметов</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлено исключение ящиков Архивов в автовзаимодействии</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлена поддержка подвала</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлены настройки оптимизации во вкладке «Основное»</font>",
-        "<font color='rgb(0, 255, 0)'>+ Добавлена панель FPS и пинга</font>",
-        "<font color='rgb(255, 255, 0)'>~ Увеличено скругление окна (2 → 6)</font>",
-        "<font color='rgb(255, 255, 0)'>~ Улучшена очистка при выгрузке</font>",
-        "<font color='rgb(255, 255, 0)'>~ Улучшено взаимодействие с объектами Архивов</font>",
-        "<font color='rgb(0, 255, 0)'>+ Исправлено падение FPS из-за ESP в мультиплеере (единая отрисовка)</font>",
+        "<font color='rgb(125, 211, 252)'><b>v1.0</b> — FeatherHub</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Создано Feather</font>",
+        "<font color='rgb(52, 211, 153)'>✦ KeyAuth система ключей</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Выбор языка EN/RU</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Добавлена вкладка «Лестница»</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Защита от повторного запуска</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Игрушка Sally в список предметов</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Исключение ящиков Архивов в автовзаимодействии</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Поддержка подвала</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Настройки оптимизации во вкладке «Основное»</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Панель FPS и пинга</font>",
+        "<font color='rgb(251, 191, 36)'>◆ Увеличено скругление окна</font>",
+        "<font color='rgb(251, 191, 36)'>◆ Улучшена очистка при выгрузке</font>",
+        "<font color='rgb(251, 191, 36)'>◆ Улучшено взаимодействие с объектами Архивов</font>",
+        "<font color='rgb(52, 211, 153)'>✦ Исправлено падение FPS из-за ESP в мультиплеере</font>",
     }
     for _, Entry in ipairs(Changelog) do ChangelogBox:AddLabel(Entry, true) end
 
@@ -2917,7 +2920,7 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
         local Notification = Instance.new("Frame")
         Notification.Name = "Notification"
         Notification.BackgroundColor3 = Library.Scheme.BackgroundColor
-        Notification.BackgroundTransparency = 0.06
+        Notification.BackgroundTransparency = 0.04
         Notification.BorderSizePixel = 0
         Notification.Position = UDim2.new(1, 24, 0, 0)
         Notification.Size = UDim2.fromScale(1, 1)
@@ -2925,12 +2928,21 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
         Notification.Parent = Root
 
         local Corner = Instance.new("UICorner")
-        Corner.CornerRadius = UDim.new(0, 10)
+        Corner.CornerRadius = UDim.new(0, 12)
         Corner.Parent = Notification
         local Stroke = Instance.new("UIStroke")
         Stroke.Color = Library.Scheme.OutlineColor
-        Stroke.Transparency = 0.2
+        Stroke.Transparency = 0.15
+        Stroke.Thickness = 1
         Stroke.Parent = Notification
+
+        -- Градиентный фон
+        local NotifGradient = Instance.new("UIGradient", Notification)
+        NotifGradient.Rotation = 135
+        NotifGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Library.Scheme.BackgroundColor),
+            ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+        })
 
         Library:CreateIcon(Library:GetIcon("feather"), {
             Position = UDim2.fromOffset(14, 14),
@@ -2984,7 +2996,8 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
         if not TargetConnection then
             Services.TweenService:Create(Line, TweenInfo.new(Lifetime, Enum.EasingStyle.Linear), { Size = UDim2.fromOffset(0, 3) }):Play()
         end
-        Services.TweenService:Create(Notification, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.fromOffset(0, 0) }):Play()
+        -- Плавное появление с лёгким отскоком
+        Services.TweenService:Create(Notification, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.5), { Position = UDim2.fromOffset(0, 0) }):Play()
         -- Ограниченный срок исключает зависание на уже уничтоженном Instance.
         local Deadline = tick() + (TargetConnection and 300 or Lifetime)
         while Root.Parent and Container.Parent and not Library.Unloaded do
@@ -2993,8 +3006,8 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
         end
         if TargetConnection then TargetConnection:Disconnect() end
         if Root.Parent and Container.Parent and not Library.Unloaded then
-            Services.TweenService:Create(Notification, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = UDim2.new(1, 24, 0, 0) }):Play()
-            task.wait(0.2)
+            Services.TweenService:Create(Notification, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = UDim2.new(1, 24, 0, 0), BackgroundTransparency = 0.3 }):Play()
+            task.wait(0.25)
         end
         local Index = table.find(Cards, Root)
         if Index then table.remove(Cards, Index) end
