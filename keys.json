@@ -1,0 +1,15 @@
+-- FeatherHub Keys
+-- Пользователь копирует любой ключ отсюда и вставляет в лоадер
+
+{
+    "FEATHER-ALPHA-001",
+    "FEATHER-ALPHA-002",
+    "FEATHER-ALPHA-003",
+    "FEATHER-ALPHA-004",
+    "FEATHER-ALPHA-005",
+    "FEATHER-BETA-101",
+    "FEATHER-BETA-102",
+    "FEATHER-BETA-103",
+    "FEATHER-GAMMA-201",
+    "FEATHER-GAMMA-202"
+}

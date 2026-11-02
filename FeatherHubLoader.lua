@@ -1,4 +1,4 @@
--- FeatherHub Loader — KeyAuth
+-- FeatherHub Loader
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHubLoader.lua"))()
 
 -- ════════════════════════════════════════════════════════════════
@@ -6,16 +6,8 @@
 -- ════════════════════════════════════════════════════════════════
 
 local SCRIPT_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHub.lua"
-local KEYAUTH_APP_NAME = "FeatherHUB - Loader"
-local KEYAUTH_OWNER_ID = "l7G7j8LbHP"
-local KEYAUTH_VERSION = "1.0"
-
--- Linkvertise ссылка (пользователь проходит оффер → получает ключ)
--- Создай ссылку на https://linkvertise.com и вставь сюда
-local LINKVERTISE_URL = "https://link-to.net/YOUR_ID"
-
--- KeyAuth панель (куда пользователь идёт после Linkvertise за ключом)
-local KEYAUTH_PANEL_URL = "https://keyauth.cc/app/?page=licenses"
+local KEYS_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/keys.json"
+local LOADER_VERSION = "1.0"
 
 -- ════════════════════════════════════════════════════════════════
 -- СЕРВИСЫ
@@ -55,43 +47,39 @@ local TI = { Quick = TweenInfo.new(0.15, Enum.EasingStyle.Quad), Smooth = TweenI
 local function Tween(Obj, Props, Info) TweenService:Create(Obj, Info or TI.Smooth, Props):Play() end
 
 -- ════════════════════════════════════════════════════════════════
--- KEYAUTH API 1.3
+-- СИСТЕМА КЛЮЧЕЙ (GitHub keys.json)
 -- ════════════════════════════════════════════════════════════════
 
-local KEYAUTH_API_URL = "https://keyauth.win/api/1.3/"
-local SessionId = nil
-local HWID = tostring(LocalPlayer.UserId)
+local ValidKeys = nil
+local KeysLoading = false
 
-local function KeyAuthRequest(Data)
-    local Ok, Res = pcall(function()
-        return game:HttpGet(KEYAUTH_API_URL .. "?type=" .. HttpService:UrlEncode(Data.type)
-            .. "&name=" .. HttpService:UrlEncode(KEYAUTH_APP_NAME)
-            .. "&ownerid=" .. HttpService:UrlEncode(KEYAUTH_OWNER_ID)
-            .. (Data.ver and "&ver=" .. HttpService:UrlEncode(Data.ver) or "")
-            .. (Data.key and "&key=" .. HttpService:UrlEncode(Data.key) or "")
-            .. (Data.hwid and "&hwid=" .. HttpService:UrlEncode(Data.hwid) or "")
-            .. (Data.sessionid and "&sessionid=" .. HttpService:UrlEncode(Data.sessionid) or "")
-            .. (Data.code and "&code=" .. HttpService:UrlEncode(Data.code) or ""))
-    end)
-    if not Ok then return nil, "Ошибка соединения с KeyAuth" end
-    local POk, Json = pcall(function() return HttpService:JSONDecode(Res) end)
-    if not POk then return nil, "Ошибка парсинга ответа" end
-    return Json, nil
+local function LoadKeys()
+    if ValidKeys or KeysLoading then return end
+    KeysLoading = true
+    local Ok, Res = pcall(function() return game:HttpGet(KEYS_URL) end)
+    KeysLoading = false
+    if Ok then
+        local POk, Keys = pcall(function() return HttpService:JSONDecode(Res) end)
+        if POk and type(Keys) == "table" then
+            ValidKeys = {}
+            for _, Key in ipairs(Keys) do
+                ValidKeys[tostring(Key):upper()] = true
+            end
+        end
+    end
 end
 
-local function KeyAuthInit()
-    local Data, Err = KeyAuthRequest({ type = "init", ver = KEYAUTH_VERSION })
-    if not Data then return false, Err end
-    if Data.success then SessionId = Data.sessionid; return true end
-    return false, Data.message or "Ошибка инициализации"
-end
-
-local function KeyAuthLicense(Key)
-    if not SessionId then return false, "Сессия не инициализирована" end
-    local Data, Err = KeyAuthRequest({ type = "license", key = Key, hwid = HWID, sessionid = SessionId })
-    if not Data then return false, Err end
-    if Data.success then return true, Data.message or "Ключ подтверждён" end
-    return false, Data.message or "Неверный ключ"
+local function VerifyKey(Key)
+    if not Key or Key == "" then return false, "Введите ключ доступа" end
+    -- Загружаем ключи если ещё не загружены
+    LoadKeys()
+    if KeysLoading then return false, "Загрузка ключей..." end
+    if not ValidKeys then return false, "Не удалось загрузить ключи" end
+    -- Проверяем ключ
+    if ValidKeys[Key:upper()] then
+        return true, "Ключ подтверждён"
+    end
+    return false, "Неверный ключ"
 end
 
 -- ════════════════════════════════════════════════════════════════
@@ -170,7 +158,7 @@ BarGlow.Transparency = 0.5
 BarGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 -- ════════════════════════════════════════════════════════════════
--- UI: ИКОНКА ПЕРА (нарисована фигурами)
+-- UI: ИКОНКА ПЕРА
 -- ════════════════════════════════════════════════════════════════
 
 local IconHolder = Instance.new("Frame")
@@ -193,8 +181,6 @@ local FeatherIcon = Instance.new("TextLabel")
 FeatherIcon.Size = UDim2.new(1, 0, 1, 0)
 FeatherIcon.BackgroundTransparency = 1
 FeatherIcon.Text = "F"
-FeatherIcon.TextSize = 22
-FeatherIcon.Font = Enum.Font.GothamBlack
 FeatherIcon.TextSize = 28
 FeatherIcon.Font = Enum.Font.GothamBold
 FeatherIcon.TextColor3 = C.Accent
@@ -219,7 +205,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(1, 0, 0, 18)
 Subtitle.Position = UDim2.new(0, 0, 0, 122)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Key Authentication"
+Subtitle.Text = "Key System"
 Subtitle.TextColor3 = C.TextDim
 Subtitle.TextSize = 12
 Subtitle.Font = Enum.Font.Gotham
@@ -396,7 +382,7 @@ local HintLabel = Instance.new("TextLabel")
 HintLabel.Size = UDim2.new(0.8, 0, 0, 14)
 HintLabel.Position = UDim2.new(0.1, 0, 0, 322)
 HintLabel.BackgroundTransparency = 1
-HintLabel.Text = "Пройди оффер → получи ключ"
+HintLabel.Text = "Нажми чтобы скопировать ссылку на ключи"
 HintLabel.TextColor3 = C.TextMuted
 HintLabel.TextSize = 10
 HintLabel.Font = Enum.Font.Gotham
@@ -470,7 +456,7 @@ local VersionLabel = Instance.new("TextLabel")
 VersionLabel.Size = UDim2.new(0.8, 0, 0, 14)
 VersionLabel.Position = UDim2.new(0.1, 0, 0, 430)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "v" .. KEYAUTH_VERSION .. "  ·  KeyAuth Protected"
+VersionLabel.Text = "v" .. LOADER_VERSION .. "  ·  FeatherHub"
 VersionLabel.TextColor3 = Color3.fromRGB(50, 60, 80)
 VersionLabel.TextSize = 10
 VersionLabel.Font = Enum.Font.Gotham
@@ -518,15 +504,6 @@ local function LoadScript()
     task.wait(0.2)
     local Ok, Err = pcall(function() loadstring(game:HttpGet(SCRIPT_URL))() end)
     if not Ok then warn("[FeatherHub] Ошибка загрузки: " .. tostring(Err)) end
-end
-
-local function VerifyKey(Key)
-    if not Key or Key == "" then return false, "Введите ключ доступа" end
-    if not SessionId then
-        local Ok, Err = KeyAuthInit()
-        if not Ok then return false, Err end
-    end
-    return KeyAuthLicense(Key)
 end
 
 -- ════════════════════════════════════════════════════════════════
@@ -581,30 +558,13 @@ VerifyBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
-local GetKeyStep = 1 -- 1 = Linkvertise, 2 = KeyAuth
-
 GetKeyBtn.MouseButton1Click:Connect(function()
     local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
-    if GetKeyStep == 1 then
-        -- Шаг 1: копируем Linkvertise
-        if type(Copy) == "function" then
-            pcall(Copy, LINKVERTISE_URL)
-            SetStatus("Шаг 1/2: пройди оффер по ссылке", C.Accent)
-        else
-            SetStatus(LINKVERTISE_URL, C.Accent)
-        end
-        GetKeyBtn.Text = "Взять ключ"
-        GetKeyStep = 2
+    if type(Copy) == "function" then
+        pcall(Copy, KEYS_URL)
+        SetStatus("Ссылка на ключи скопирована!", C.Success)
     else
-        -- Шаг 2: копируем KeyAuth
-        if type(Copy) == "function" then
-            pcall(Copy, KEYAUTH_PANEL_URL)
-            SetStatus("Шаг 2/2: вставь ключ из KeyAuth", C.Success)
-        else
-            SetStatus(KEYAUTH_PANEL_URL, C.Accent)
-        end
-        GetKeyBtn.Text = "Получить ключ"
-        GetKeyStep = 1
+        SetStatus(KEYS_URL, C.Accent)
     end
 end)
 
