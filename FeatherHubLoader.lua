@@ -1,25 +1,27 @@
--- FeatherHub Loader с KeyAuth системой ключей
--- Документация: https://docs.keyauth.cc/api/getting-started/initialization
+-- FeatherHub Loader — KeyAuth
+-- Ссылка для распространения:
+-- loadstring(game:HttpGet("https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHubLoader.lua"))()
 
 -- ════════════════════════════════════════════════════════════════
--- НАСТРОЙКИ KEYAUTH
+-- НАСТРОЙКИ
 -- ════════════════════════════════════════════════════════════════
 
--- URL основного скрипта (замени на свой после загрузки)
-local SCRIPT_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/FeatherHub.lua"
+local SCRIPT_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHub.lua"
 
--- KeyAuth настройки (возьми из https://keyauth.cc/app/?page=manage-apps)
-local KEYAUTH_APP_NAME = "FeatherHUB - Loader"  -- Application Name
-local KEYAUTH_OWNER_ID = "l7G7j8LbHP"        -- Account Owner ID (10 символов)
-local KEYAUTH_VERSION = "1.0"                    -- Application Version
+local KEYAUTH_APP_NAME = "FeatherHUB - Loader"
+local KEYAUTH_OWNER_ID = "l7G7j8LbHP"
+local KEYAUTH_VERSION = "1.0"
+
+-- Ссылка на панель KeyAuth (куда пользователь идёт за ключом)
+local KEYAUTH_PANEL_URL = "https://keyauth.cc/app/?page=licenses"
 
 -- ════════════════════════════════════════════════════════════════
 -- СЕРВИСЫ
 -- ════════════════════════════════════════════════════════════════
 
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
 
 -- ════════════════════════════════════════════════════════════════
 -- KEYAUTH API 1.3
@@ -27,7 +29,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local KEYAUTH_API_URL = "https://keyauth.win/api/1.3/"
 local SessionId = nil
-local HWID = tostring(LocalPlayer.UserId) -- Используем UserId как HWID
+local HWID = tostring(LocalPlayer.UserId)
 
 local function KeyAuthRequest(Data)
     local Success, Response = pcall(function()
@@ -41,131 +43,135 @@ local function KeyAuthRequest(Data)
             .. (Data.code and "&code=" .. HttpService:UrlEncode(Data.code) or "")
         )
     end)
+    if not Success then return nil, "Ошибка соединения с KeyAuth" end
 
-    if not Success then
-        return nil, "Ошибка соединения с KeyAuth"
-    end
-
-    local ParseSuccess, JsonData = pcall(function()
-        return HttpService:JSONDecode(Response)
-    end)
-
-    if not ParseSuccess then
-        return nil, "Ошибка парсинга ответа KeyAuth"
-    end
-
-    return JsonData, nil
+    local Ok, Json = pcall(function() return HttpService:JSONDecode(Response) end)
+    if not Ok then return nil, "Ошибка парсинга ответа" end
+    return Json, nil
 end
 
 local function KeyAuthInit()
-    local Data, Error = KeyAuthRequest({
-        type = "init",
-        ver = KEYAUTH_VERSION
-    })
-
-    if not Data then
-        return false, Error
-    end
-
-    if Data.success then
-        SessionId = Data.sessionid
-        return true, "Инициализация успешна"
-    else
-        return false, Data.message or "Ошибка инициализации"
-    end
+    local Data, Err = KeyAuthRequest({ type = "init", ver = KEYAUTH_VERSION })
+    if not Data then return false, Err end
+    if Data.success then SessionId = Data.sessionid; return true end
+    return false, Data.message or "Ошибка инициализации"
 end
 
 local function KeyAuthLicense(Key)
-    if not SessionId then
-        return false, "Сессия не инициализирована"
-    end
-
-    local Data, Error = KeyAuthRequest({
-        type = "license",
-        key = Key,
-        hwid = HWID,
-        sessionid = SessionId
-    })
-
-    if not Data then
-        return false, Error
-    end
-
-    if Data.success then
-        return true, Data.message or "Ключ подтверждён"
-    else
-        return false, Data.message or "Неверный ключ"
-    end
+    if not SessionId then return false, "Сессия не инициализирована" end
+    local Data, Err = KeyAuthRequest({ type = "license", key = Key, hwid = HWID, sessionid = SessionId })
+    if not Data then return false, Err end
+    if Data.success then return true, Data.message or "Ключ подтверждён" end
+    return false, Data.message or "Неверный ключ"
 end
 
 -- ════════════════════════════════════════════════════════════════
--- UI БИБЛИОТЕКА (упрощённая для лоадера)
+-- UI
 -- ════════════════════════════════════════════════════════════════
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FeatherHubLoader"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 100
 ScreenGui.Parent = game:GetService("CoreGui")
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 400, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(16, 24, 39)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+-- Затемнённый фон
+local Overlay = Instance.new("Frame")
+Overlay.Size = UDim2.new(1, 0, 1, 0)
+Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Overlay.BackgroundTransparency = 0.5
+Overlay.BorderSizePixel = 0
+Overlay.Parent = ScreenGui
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 12)
-UICorner.Parent = MainFrame
+-- Главная карточка
+local Card = Instance.new("Frame")
+Card.Name = "Card"
+Card.Size = UDim2.new(0, 380, 0, 420)
+Card.Position = UDim2.new(0.5, -190, 0.5, -210)
+Card.BackgroundColor3 = Color3.fromRGB(13, 19, 33)
+Card.BorderSizePixel = 0
+Card.Parent = ScreenGui
 
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(45, 64, 91)
-UIStroke.Thickness = 2
-UIStroke.Parent = MainFrame
+local CardCorner = Instance.new("UICorner")
+CardCorner.CornerRadius = UDim.new(0, 16)
+CardCorner.Parent = Card
 
--- Заголовок
+local CardStroke = Instance.new("UIStroke")
+CardStroke.Color = Color3.fromRGB(45, 64, 91)
+CardStroke.Thickness = 1.5
+CardStroke.Parent = Card
+
+-- Декоративная полоска сверху
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, -32, 0, 3)
+TopBar.Position = UDim2.new(0, 16, 0, 16)
+TopBar.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = Card
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(1, 0)
+TopBarCorner.Parent = TopBar
+
+-- Логотип / заголовок
 local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, 0, 0, 50)
-Title.Position = UDim2.new(0, 0, 0, 20)
+Title.Size = UDim2.new(1, 0, 0, 36)
+Title.Position = UDim2.new(0, 0, 0, 32)
 Title.BackgroundTransparency = 1
 Title.Text = "FeatherHub"
 Title.TextColor3 = Color3.fromRGB(125, 211, 252)
-Title.TextSize = 28
+Title.TextSize = 30
 Title.Font = Enum.Font.GothamBold
-Title.Parent = MainFrame
+Title.Parent = Card
 
 local Subtitle = Instance.new("TextLabel")
-Subtitle.Name = "Subtitle"
 Subtitle.Size = UDim2.new(1, 0, 0, 20)
-Subtitle.Position = UDim2.new(0, 0, 0, 55)
+Subtitle.Position = UDim2.new(0, 0, 0, 66)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Key System"
-Subtitle.TextColor3 = Color3.fromRGB(148, 163, 184)
-Subtitle.TextSize = 14
+Subtitle.Text = "Key Authentication"
+Subtitle.TextColor3 = Color3.fromRGB(100, 116, 139)
+Subtitle.TextSize = 13
 Subtitle.Font = Enum.Font.Gotham
-Subtitle.Parent = MainFrame
+Subtitle.Parent = Card
 
--- Поле ввода ключа
+-- Разделитель
+local Divider = Instance.new("Frame")
+Divider.Size = UDim2.new(0.85, 0, 0, 1)
+Divider.Position = UDim2.new(0.075, 0, 0, 96)
+Divider.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
+Divider.BorderSizePixel = 0
+Divider.Parent = Card
+
+-- Метка поля ввода
+local InputLabel = Instance.new("TextLabel")
+InputLabel.Size = UDim2.new(0.85, 0, 0, 18)
+InputLabel.Position = UDim2.new(0.075, 0, 0, 112)
+InputLabel.BackgroundTransparency = 1
+InputLabel.Text = "КЛЮЧ ДОСТУПА"
+InputLabel.TextColor3 = Color3.fromRGB(100, 116, 139)
+InputLabel.TextSize = 11
+InputLabel.Font = Enum.Font.GothamBold
+InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+InputLabel.Parent = Card
+
+-- Поле ввода
 local KeyBox = Instance.new("TextBox")
-KeyBox.Name = "KeyBox"
-KeyBox.Size = UDim2.new(0.8, 0, 0, 40)
-KeyBox.Position = UDim2.new(0.1, 0, 0, 100)
-KeyBox.BackgroundColor3 = Color3.fromRGB(24, 34, 53)
+KeyBox.Size = UDim2.new(0.85, 0, 0, 44)
+KeyBox.Position = UDim2.new(0.075, 0, 0, 136)
+KeyBox.BackgroundColor3 = Color3.fromRGB(20, 28, 44)
 KeyBox.BorderSizePixel = 0
-KeyBox.PlaceholderText = "Введите ключ доступа..."
-KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 116, 139)
+KeyBox.PlaceholderText = "Вставьте ключ..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(71, 85, 105)
 KeyBox.Text = ""
 KeyBox.TextColor3 = Color3.fromRGB(231, 237, 247)
-KeyBox.TextSize = 16
+KeyBox.TextSize = 15
 KeyBox.Font = Enum.Font.Gotham
 KeyBox.ClearTextOnFocus = false
-KeyBox.Parent = MainFrame
+KeyBox.Parent = Card
 
 local KeyBoxCorner = Instance.new("UICorner")
-KeyBoxCorner.CornerRadius = UDim.new(0, 8)
+KeyBoxCorner.CornerRadius = UDim.new(0, 10)
 KeyBoxCorner.Parent = KeyBox
 
 local KeyBoxStroke = Instance.new("UIStroke")
@@ -173,61 +179,100 @@ KeyBoxStroke.Color = Color3.fromRGB(45, 64, 91)
 KeyBoxStroke.Thickness = 1
 KeyBoxStroke.Parent = KeyBox
 
+-- Фокус на поле ввода — подсветка
+KeyBox.Focused:Connect(function()
+    TweenService:Create(KeyBoxStroke, TweenInfo.new(0.2), { Color = Color3.fromRGB(125, 211, 252) }):Play()
+end)
+KeyBox.FocusLost:Connect(function()
+    TweenService:Create(KeyBoxStroke, TweenInfo.new(0.2), { Color = Color3.fromRGB(45, 64, 91) }):Play()
+end)
+
 -- Статус
 local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Name = "Status"
-StatusLabel.Size = UDim2.new(0.8, 0, 0, 30)
-StatusLabel.Position = UDim2.new(0.1, 0, 0, 150)
+StatusLabel.Size = UDim2.new(0.85, 0, 0, 22)
+StatusLabel.Position = UDim2.new(0.075, 0, 0, 190)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = ""
 StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-StatusLabel.TextSize = 14
+StatusLabel.TextSize = 13
 StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Parent = MainFrame
+StatusLabel.Parent = Card
 
--- Кнопка подтверждения
-local VerifyButton = Instance.new("TextButton")
-VerifyButton.Name = "VerifyButton"
-VerifyButton.Size = UDim2.new(0.8, 0, 0, 45)
-VerifyButton.Position = UDim2.new(0.1, 0, 0, 200)
-VerifyButton.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
-VerifyButton.BorderSizePixel = 0
-VerifyButton.Text = "Подтвердить"
-VerifyButton.TextColor3 = Color3.fromRGB(16, 24, 39)
-VerifyButton.TextSize = 18
-VerifyButton.Font = Enum.Font.GothamBold
-VerifyButton.AutoButtonColor = true
-VerifyButton.Parent = MainFrame
+-- Кнопка "Подтвердить"
+local VerifyBtn = Instance.new("TextButton")
+VerifyBtn.Size = UDim2.new(0.85, 0, 0, 46)
+VerifyBtn.Position = UDim2.new(0.075, 0, 0, 220)
+VerifyBtn.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
+VerifyBtn.BorderSizePixel = 0
+VerifyBtn.Text = "Подтвердить"
+VerifyBtn.TextColor3 = Color3.fromRGB(13, 19, 33)
+VerifyBtn.TextSize = 16
+VerifyBtn.Font = Enum.Font.GothamBold
+VerifyBtn.AutoButtonColor = true
+VerifyBtn.Parent = Card
 
-local ButtonCorner = Instance.new("UICorner")
-ButtonCorner.CornerRadius = UDim.new(0, 8)
-ButtonCorner.Parent = VerifyButton
+local VerifyCorner = Instance.new("UICorner")
+VerifyCorner.CornerRadius = UDim.new(0, 10)
+VerifyCorner.Parent = VerifyBtn
 
--- Кнопка получения ключа
-local GetKeyButton = Instance.new("TextButton")
-GetKeyButton.Name = "GetKeyButton"
-GetKeyButton.Size = UDim2.new(0.8, 0, 0, 35)
-GetKeyButton.Position = UDim2.new(0.1, 0, 0, 255)
-GetKeyButton.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
-GetKeyButton.BorderSizePixel = 0
-GetKeyButton.Text = "Получить ключ"
-GetKeyButton.TextColor3 = Color3.fromRGB(125, 211, 252)
-GetKeyButton.TextSize = 14
-GetKeyButton.Font = Enum.Font.Gotham
-GetKeyButton.AutoButtonColor = true
-GetKeyButton.Parent = MainFrame
+-- Hover-эффект
+VerifyBtn.MouseEnter:Connect(function()
+    TweenService:Create(VerifyBtn, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(160, 225, 255) }):Play()
+end)
+VerifyBtn.MouseLeave:Connect(function()
+    TweenService:Create(VerifyBtn, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(125, 211, 252) }):Play()
+end)
+
+-- Кнопка "Получить ключ" (ведёт на KeyAuth)
+local GetKeyBtn = Instance.new("TextButton")
+GetKeyBtn.Size = UDim2.new(0.85, 0, 0, 40)
+GetKeyBtn.Position = UDim2.new(0.075, 0, 0, 278)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(20, 28, 44)
+GetKeyBtn.BorderSizePixel = 0
+GetKeyBtn.Text = "Получить ключ"
+GetKeyBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
+GetKeyBtn.TextSize = 14
+GetKeyBtn.Font = Enum.Font.Gotham
+GetKeyBtn.AutoButtonColor = true
+GetKeyBtn.Parent = Card
 
 local GetKeyCorner = Instance.new("UICorner")
-GetKeyCorner.CornerRadius = UDim.new(0, 8)
-GetKeyCorner.Parent = GetKeyButton
+GetKeyCorner.CornerRadius = UDim.new(0, 10)
+GetKeyCorner.Parent = GetKeyBtn
 
 local GetKeyStroke = Instance.new("UIStroke")
-GetKeyStroke.Color = Color3.fromRGB(125, 211, 252)
+GetKeyStroke.Color = Color3.fromRGB(45, 64, 91)
 GetKeyStroke.Thickness = 1
-GetKeyStroke.Parent = GetKeyButton
+GetKeyStroke.Parent = GetKeyBtn
+
+GetKeyBtn.MouseEnter:Connect(function()
+    TweenService:Create(GetKeyStroke, TweenInfo.new(0.15), { Color = Color3.fromRGB(125, 211, 252) }):Play()
+end)
+GetKeyBtn.MouseLeave:Connect(function()
+    TweenService:Create(GetKeyStroke, TweenInfo.new(0.15), { Color = Color3.fromRGB(45, 64, 91) }):Play()
+end)
+
+-- Разделитель 2
+local Divider2 = Instance.new("Frame")
+Divider2.Size = UDim2.new(0.85, 0, 0, 1)
+Divider2.Position = UDim2.new(0.075, 0, 0, 332)
+Divider2.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
+Divider2.BorderSizePixel = 0
+Divider2.Parent = Card
+
+-- Копирайт
+local Footer = Instance.new("TextLabel")
+Footer.Size = UDim2.new(1, 0, 0, 20)
+Footer.Position = UDim2.new(0, 0, 0, 344)
+Footer.BackgroundTransparency = 1
+Footer.Text = "Feather - Scripter"
+Footer.TextColor3 = Color3.fromRGB(71, 85, 105)
+Footer.TextSize = 12
+Footer.Font = Enum.Font.Gotham
+Footer.Parent = Card
 
 -- ════════════════════════════════════════════════════════════════
--- ФУНКЦИИ ПРОВЕРКИ
+-- ФУНКЦИИ
 -- ════════════════════════════════════════════════════════════════
 
 local function SetStatus(Text, Color)
@@ -235,205 +280,98 @@ local function SetStatus(Text, Color)
     StatusLabel.TextColor3 = Color or Color3.fromRGB(248, 113, 113)
 end
 
-local function CloseLoader()
-    ScreenGui:Destroy()
-end
-
 local function LoadScript()
-    CloseLoader()
+    ScreenGui:Destroy()
     task.wait(0.3)
-    
-    local Success, Error = pcall(function()
-        loadstring(game:HttpGet(SCRIPT_URL))()
-    end)
-    
-    if not Success then
-        warn("[FeatherHub] Ошибка загрузки скрипта: " .. tostring(Error))
-        
-        -- Показываем ошибку через CoreGui
-        local ErrorGui = Instance.new("ScreenGui")
-        ErrorGui.Name = "FeatherHubError"
-        ErrorGui.Parent = game:GetService("CoreGui")
-        
-        local ErrorFrame = Instance.new("Frame")
-        ErrorFrame.Size = UDim2.new(0, 400, 0, 150)
-        ErrorFrame.Position = UDim2.new(0.5, -200, 0.5, -75)
-        ErrorFrame.BackgroundColor3 = Color3.fromRGB(16, 24, 39)
-        ErrorFrame.Parent = ErrorGui
-        
-        local ErrorCorner = Instance.new("UICorner")
-        ErrorCorner.CornerRadius = UDim.new(0, 12)
-        ErrorCorner.Parent = ErrorFrame
-        
-        local ErrorLabel = Instance.new("TextLabel")
-        ErrorLabel.Size = UDim2.new(1, -40, 1, -40)
-        ErrorLabel.Position = UDim2.new(0, 20, 0, 20)
-        ErrorLabel.BackgroundTransparency = 1
-        ErrorLabel.Text = "Ошибка загрузки FeatherHub:\n" .. tostring(Error)
-        ErrorLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        ErrorLabel.TextSize = 14
-        ErrorLabel.Font = Enum.Font.Gotham
-        ErrorLabel.TextWrapped = true
-        ErrorLabel.Parent = ErrorFrame
-        
-        game:GetService("Debris"):AddItem(ErrorGui, 10)
+    local Ok, Err = pcall(function() loadstring(game:HttpGet(SCRIPT_URL))() end)
+    if not Ok then
+        warn("[FeatherHub] Ошибка загрузки: " .. tostring(Err))
     end
 end
-
--- ════════════════════════════════════════════════════════════════
--- KEYAUTH ПРОВЕРКА КЛЮЧА
--- ════════════════════════════════════════════════════════════════
 
 local function VerifyKey(Key)
-    if not Key or Key == "" then
-        return false, "Введите ключ доступа"
-    end
-    
-    -- Сначала инициализируем KeyAuth
+    if not Key or Key == "" then return false, "Введите ключ доступа" end
     if not SessionId then
         SetStatus("Инициализация...", Color3.fromRGB(125, 211, 252))
-        local InitSuccess, InitError = KeyAuthInit()
-        
-        if not InitSuccess then
-            return false, InitError
-        end
+        local Ok, Err = KeyAuthInit()
+        if not Ok then return false, Err end
     end
-    
-    -- Проверяем ключ
     return KeyAuthLicense(Key)
 end
 
 -- ════════════════════════════════════════════════════════════════
--- ОБРАБОТЧИКИ КНОПОК
+-- ОБРАБОТЧИКИ
 -- ════════════════════════════════════════════════════════════════
 
-VerifyButton.MouseButton1Click:Connect(function()
-    local Key = KeyBox.Text:gsub("%s+", "") -- Убираем пробелы
-    
+VerifyBtn.MouseButton1Click:Connect(function()
+    local Key = KeyBox.Text:gsub("%s+", "")
     SetStatus("Проверка...", Color3.fromRGB(125, 211, 252))
-    VerifyButton.Active = false
-    VerifyButton.BackgroundColor3 = Color3.fromRGB(100, 116, 139)
-    
-    -- Имитация загрузки для UX
+    VerifyBtn.Active = false
+    VerifyBtn.BackgroundColor3 = Color3.fromRGB(71, 85, 105)
+
     task.spawn(function()
-        task.wait(0.5)
-        
-        local Success, Message = VerifyKey(Key)
-        
-        if Success then
-            SetStatus(Message, Color3.fromRGB(74, 222, 128))
-            task.wait(1)
+        task.wait(0.4)
+        local Ok, Msg = VerifyKey(Key)
+        if Ok then
+            SetStatus(Msg, Color3.fromRGB(74, 222, 128))
+            task.wait(0.8)
             LoadScript()
         else
-            SetStatus(Message, Color3.fromRGB(248, 113, 113))
-            VerifyButton.Active = true
-            VerifyButton.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
-            
-            -- Анимация ошибки
-            task.spawn(function()
-                for i = 1, 3 do
-                    KeyBox.BackgroundColor3 = Color3.fromRGB(127, 29, 29)
-                    task.wait(0.1)
-                    KeyBox.BackgroundColor3 = Color3.fromRGB(24, 34, 53)
-                    task.wait(0.1)
-                end
-            end)
+            SetStatus(Msg, Color3.fromRGB(248, 113, 113))
+            VerifyBtn.Active = true
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
+            -- Тряска поля ввода
+            for i = 1, 3 do
+                TweenService:Create(KeyBox, TweenInfo.new(0.08), { Position = UDim2.new(0.075 + (i % 2 == 0 and -0.01 or 0.01), 0, 0, 136) }):Play()
+                task.wait(0.08)
+            end
+            TweenService:Create(KeyBox, TweenInfo.new(0.1), { Position = UDim2.new(0.075, 0, 0, 136) }):Play()
         end
     end)
 end)
 
-GetKeyButton.MouseButton1Click:Connect(function()
-    -- Замени на свою ссылку для получения ключа
-    local DISCORD_LINK = "https://discord.gg/TCkcAsPQpQ"
-    
-    local Success, CopyFunc = pcall(function()
-        return setclipboard or toclipboard
-    end)
-    
-    if Success and type(CopyFunc) == "function" then
-        pcall(CopyFunc, DISCORD_LINK)
-        SetStatus("Ссылка скопирована! Открой Discord", Color3.fromRGB(74, 222, 128))
+GetKeyBtn.MouseButton1Click:Connect(function()
+    local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
+    if type(Copy) == "function" then
+        pcall(Copy, KEYAUTH_PANEL_URL)
+        SetStatus("Ссылка на KeyAuth скопирована!", Color3.fromRGB(74, 222, 128))
     else
-        SetStatus("Открой: " .. DISCORD_LINK, Color3.fromRGB(125, 211, 252))
-    end
-    
-    -- Открываем ссылку в браузере (если возможно)
-    pcall(function()
-        if fireclicklabel then -- Некоторые эксплоиты поддерживают
-            -- Невозможно открыть браузер напрямую, поэтому просто копируем
-        end
-    end)
-end)
-
--- Enter для подтверждения
-KeyBox.FocusLost:Connect(function(EnterPressed)
-    if EnterPressed then
-        VerifyButton:Fire()
+        SetStatus(KEYAUTH_PANEL_URL, Color3.fromRGB(125, 211, 252))
     end
 end)
 
+KeyBox.FocusLost:Connect(function(Enter)
+    if Enter then VerifyBtn:Fire() end
+end)
+
 -- ════════════════════════════════════════════════════════════════
--- ПЕРЕТАСКИВАНИЕ ОКНА
+-- ПЕРЕТАСКИВАНИЕ
 -- ════════════════════════════════════════════════════════════════
 
-local Dragging, DragInput, DragStart, StartPos
+local Dragging, DragStart, StartPos
 
-local function UpdateInput(Input)
-    local Delta = Input.Position - DragStart
-    MainFrame.Position = UDim2.new(
-        StartPos.X.Scale,
-        StartPos.X.Offset + Delta.X,
-        StartPos.Y.Scale,
-        StartPos.Y.Offset + Delta.Y
-    )
-end
-
-MainFrame.InputBegan:Connect(function(Input)
+Card.InputBegan:Connect(function(Input)
     if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
         Dragging = true
         DragStart = Input.Position
-        StartPos = MainFrame.Position
-        
+        StartPos = Card.Position
         Input.Changed:Connect(function()
-            if Input.UserInputState == Enum.UserInputState.End then
-                Dragging = false
-            end
+            if Input.UserInputState == Enum.UserInputState.End then Dragging = false end
         end)
     end
 end)
 
-MainFrame.InputChanged:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
-        DragInput = Input
-    end
-end)
-
 game:GetService("UserInputService").InputChanged:Connect(function(Input)
-    if Input == DragInput and Dragging then
-        UpdateInput(Input)
+    if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+        local Delta = Input.Position - DragStart
+        Card.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
     end
 end)
 
--- ════════════════════════════════════════════════════════════════
--- АДАПТАЦИЯ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
--- ════════════════════════════════════════════════════════════════
+-- Анимация появления
+Card.Position = UDim2.new(0.5, -190, 0.5, -230)
+TweenService:Create(Card, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+    Position = UDim2.new(0.5, -190, 0.5, -210)
+}):Play()
 
-if game:GetService("GuiService"):IsTenFootInterface() or game:GetService("UserInputService").TouchEnabled then
-    -- Увеличиваем размер кнопок для мобильных
-    KeyBox.Size = UDim2.new(0.9, 0, 0, 50)
-    KeyBox.Position = UDim2.new(0.05, 0, 0, 100)
-    KeyBox.TextSize = 20
-    
-    VerifyButton.Size = UDim2.new(0.9, 0, 0, 55)
-    VerifyButton.Position = UDim2.new(0.05, 0, 0, 170)
-    VerifyButton.TextSize = 22
-    
-    GetKeyButton.Size = UDim2.new(0.9, 0, 0, 45)
-    GetKeyButton.Position = UDim2.new(0.05, 0, 0, 240)
-    GetKeyButton.TextSize = 18
-    
-    MainFrame.Size = UDim2.new(0.9, 0, 0, 320)
-    MainFrame.Position = UDim2.new(0.05, 0, 0.5, -160)
-end
-
-print("[FeatherHub] Loader загружен. Ожидание ввода ключа...")
+print("[FeatherHub] Loader ready.")
