@@ -6,7 +6,6 @@
 -- ════════════════════════════════════════════════════════════════
 
 local SCRIPT_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHub.lua"
-local KEYS_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/keys.json"
 local LOADER_VERSION = "1.0"
 
 -- ════════════════════════════════════════════════════════════════
@@ -47,39 +46,32 @@ local TI = { Quick = TweenInfo.new(0.15, Enum.EasingStyle.Quad), Smooth = TweenI
 local function Tween(Obj, Props, Info) TweenService:Create(Obj, Info or TI.Smooth, Props):Play() end
 
 -- ════════════════════════════════════════════════════════════════
--- СИСТЕМА КЛЮЧЕЙ (GitHub keys.json)
+-- ГЕНЕРАЦИЯ И ПРОВЕРКА КЛЮЧЕЙ
 -- ════════════════════════════════════════════════════════════════
 
-local ValidKeys = nil
-local KeysLoading = false
+local CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
-local function LoadKeys()
-    if ValidKeys or KeysLoading then return end
-    KeysLoading = true
-    local Ok, Res = pcall(function() return game:HttpGet(KEYS_URL) end)
-    KeysLoading = false
-    if Ok then
-        local POk, Keys = pcall(function() return HttpService:JSONDecode(Res) end)
-        if POk and type(Keys) == "table" then
-            ValidKeys = {}
-            for _, Key in ipairs(Keys) do
-                ValidKeys[tostring(Key):upper()] = true
-            end
-        end
-    end
+local function RandomChar()
+    return CHARS:sub(math.random(1, #CHARS), math.random(1, #CHARS))
 end
 
-local function VerifyKey(Key)
-    if not Key or Key == "" then return false, "Введите ключ доступа" end
-    -- Загружаем ключи если ещё не загружены
-    LoadKeys()
-    if KeysLoading then return false, "Загрузка ключей..." end
-    if not ValidKeys then return false, "Не удалось загрузить ключи" end
-    -- Проверяем ключ
-    if ValidKeys[Key:upper()] then
-        return true, "Ключ подтверждён"
-    end
-    return false, "Неверный ключ"
+local function GenerateKey()
+    local b1, b2 = "", ""
+    for _ = 1, 4 do b1 = b1 .. RandomChar() end
+    for _ = 1, 4 do b2 = b2 .. RandomChar() end
+    return "FEATHER-" .. b1 .. "-" .. b2
+end
+
+local function IsValidKey(Key)
+    if not Key then return false end
+    Key = Key:upper():gsub("%s+", "")
+    if #Key ~= 18 then return false end
+    if Key:sub(1, 7) ~= "FEATHER" then return false end
+    if Key:sub(8, 8) ~= "-" then return false end
+    if Key:sub(13, 13) ~= "-" then return false end
+    for i = 9, 12 do if not CHARS:find(Key:sub(i, i), 1, true) then return false end end
+    for i = 14, 17 do if not CHARS:find(Key:sub(i, i), 1, true) then return false end end
+    return true
 end
 
 -- ════════════════════════════════════════════════════════════════
@@ -122,7 +114,7 @@ CardStroke.Color = C.InputBorder
 CardStroke.Thickness = 1.5
 CardStroke.Transparency = 0.3
 
--- Свечение карточки (большой UIStroke снаружи)
+-- Свечение карточки
 local GlowStroke = Instance.new("UIStroke", Card)
 GlowStroke.Color = C.AccentGlow
 GlowStroke.Thickness = 0
@@ -142,8 +134,9 @@ Gradient.Color = ColorSequence.new({
 -- ════════════════════════════════════════════════════════════════
 
 local AccentBar = Instance.new("Frame")
-AccentBar.Size = UDim2.new(0.6, 0, 0, 3)
-AccentBar.Position = UDim2.new(0.2, 0, 0, 0)
+AccentBar.Size = UDim2.new(0, 0, 0, 3)
+AccentBar.Position = UDim2.new(0.5, 0, 0, 0)
+AccentBar.AnchorPoint = Vector2.new(0.5, 0)
 AccentBar.BackgroundColor3 = C.Accent
 AccentBar.BorderSizePixel = 0
 AccentBar.Parent = Card
@@ -377,12 +370,12 @@ end)
 -- UI: КНОПКА "ПОЛУЧИТЬ КЛЮЧ"
 -- ════════════════════════════════════════════════════════════════
 
--- Подсказка над кнопкой "Получить ключ"
+-- Подсказка над кнопкой
 local HintLabel = Instance.new("TextLabel")
 HintLabel.Size = UDim2.new(0.8, 0, 0, 14)
 HintLabel.Position = UDim2.new(0.1, 0, 0, 322)
 HintLabel.BackgroundTransparency = 1
-HintLabel.Text = "Нажми чтобы скопировать ссылку на ключи"
+HintLabel.Text = "Нажми чтобы получить ключ"
 HintLabel.TextColor3 = C.TextMuted
 HintLabel.TextSize = 10
 HintLabel.Font = Enum.Font.Gotham
@@ -495,6 +488,14 @@ local function SetStatus(Text, Color)
     end
 end
 
+local function ShakeKeyBox()
+    for i = 1, 4 do
+        Tween(KeyBox, { Position = UDim2.new(0.1 + (i % 2 == 0 and -0.015 or 0.015), 0, 0, 190) }, TweenInfo.new(0.06))
+        task.wait(0.06)
+    end
+    Tween(KeyBox, { Position = UDim2.new(0.1, 0, 0, 190) }, TI.Quick)
+end
+
 local function LoadScript()
     -- Анимация исчезновения
     Tween(Card, { BackgroundTransparency = 1, Size = UDim2.new(0, 380, 0, 0) }, TweenInfo.new(0.4, Enum.EasingStyle.Quad))
@@ -507,19 +508,14 @@ local function LoadScript()
 end
 
 -- ════════════════════════════════════════════════════════════════
--- ОБРАБОТЧИКИ
+-- ЛОГИКА ПРОВЕРКИ (вынесена в функцию)
 -- ════════════════════════════════════════════════════════════════
 
-VerifyBtn.MouseButton1Click:Connect(function()
+local function DoVerify()
     local Key = KeyBox.Text:gsub("%s+", "")
     if Key == "" then
         SetStatus("Введите ключ доступа", C.Error)
-        -- Тряска
-        for i = 1, 4 do
-            Tween(KeyBox, { Position = UDim2.new(0.1 + (i % 2 == 0 and -0.015 or 0.015), 0, 0, 190) }, TweenInfo.new(0.06))
-            task.wait(0.06)
-        end
-        Tween(KeyBox, { Position = UDim2.new(0.1, 0, 0, 190) }, TI.Quick)
+        ShakeKeyBox()
         return
     end
 
@@ -530,46 +526,59 @@ VerifyBtn.MouseButton1Click:Connect(function()
     SetStatus("Проверка ключа...", C.Accent)
 
     task.spawn(function()
-        local Ok, Msg = VerifyKey(Key)
+        -- Имитация задержки для UX
+        task.wait(0.8)
         StopSpinner()
         VerifyBtn.Active = true
 
-        if Ok then
+        if IsValidKey(Key) then
             VerifyBtn.Text = "OK"
             Tween(VerifyBtn, { BackgroundColor3 = C.Success }, TI.Smooth)
-            SetStatus(Msg, C.Success)
+            SetStatus("Ключ подтверждён!", C.Success)
             task.wait(0.8)
             LoadScript()
         else
             VerifyBtn.Text = "Подтвердить"
             Tween(VerifyBtn, { BackgroundColor3 = C.Accent }, TI.Smooth)
-            SetStatus(Msg, C.Error)
-            -- Тряска поля
-            for i = 1, 4 do
-                Tween(KeyBox, { Position = UDim2.new(0.1 + (i % 2 == 0 and -0.015 or 0.015), 0, 0, 190) }, TweenInfo.new(0.06))
-                task.wait(0.06)
-            end
-            Tween(KeyBox, { Position = UDim2.new(0.1, 0, 0, 190) }, TI.Quick)
-            -- Мигание бордера красным
+            SetStatus("Неверный ключ", C.Error)
+            ShakeKeyBox()
             Tween(KeyBoxStroke, { Color = C.Error }, TI.Quick)
             task.wait(0.5)
             Tween(KeyBoxStroke, { Color = C.InputBorder }, TI.Smooth)
         end
     end)
-end)
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- ОБРАБОТЧИКИ
+-- ════════════════════════════════════════════════════════════════
+
+VerifyBtn.MouseButton1Click:Connect(DoVerify)
 
 GetKeyBtn.MouseButton1Click:Connect(function()
+    -- Генерируем уникальный ключ
+    local Key = GenerateKey()
+    KeyBox.Text = Key
+
+    -- Копируем в буфер обмена
     local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
     if type(Copy) == "function" then
-        pcall(Copy, KEYS_URL)
-        SetStatus("Ссылка на ключи скопирована!", C.Success)
+        pcall(Copy, Key)
+        SetStatus("Ключ сгенерирован и скопирован!", C.Success)
     else
-        SetStatus(KEYS_URL, C.Accent)
+        SetStatus("Ключ сгенерирован!", C.Success)
     end
+
+    -- Анимация кнопки
+    Tween(GetKeyBtn, { BackgroundColor3 = C.Success }, TI.Quick)
+    GetKeyBtn.Text = "Готово!"
+    task.wait(1.5)
+    Tween(GetKeyBtn, { BackgroundColor3 = C.BtnSecondary }, TI.Smooth)
+    GetKeyBtn.Text = "Получить ключ"
 end)
 
 KeyBox.FocusLost:Connect(function(Enter)
-    if Enter then VerifyBtn:Fire() end
+    if Enter then DoVerify() end
 end)
 
 -- ════════════════════════════════════════════════════════════════
@@ -614,12 +623,8 @@ task.spawn(function()
     Card.BackgroundTransparency = 0
     Tween(Card, { Position = UDim2.new(0.5, -200, 0.5, -230) }, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out))
     task.wait(0.15)
-    -- Полоска
+    -- Полоска — раздвигается из нуля
     Tween(AccentBar, { Size = UDim2.new(0.6, 0, 0, 3) }, TweenInfo.new(0.4, Enum.EasingStyle.Quad))
-    task.wait(0.1)
-    -- Иконка
-    IconBg.BackgroundTransparency = 0.85
-    Tween(FeatherIcon, { TextSize = 28 }, TI.Spring)
     task.wait(0.1)
     -- Заголовок
     Tween(Title, { TextTransparency = 0 }, TI.Smooth)
