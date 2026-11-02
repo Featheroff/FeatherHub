@@ -159,22 +159,22 @@ local function IsValidKey(Key)
     return true
 end
 
+-- Ссылка на Linkvertise (замени на свою)
+local LINKVERTISE_URL = "https://link-to.net/YOUR_ID"
+
 -- ════════════════════════════════════════════════════════════════
 -- ОБРАБОТЧИКИ
 -- ════════════════════════════════════════════════════════════════
 
 GetKeyBtn.MouseButton1Click:Connect(function()
-    local Key = GenerateKey()
-    KeyBox.Text = Key
-    
     local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
     if type(Copy) == "function" then
-        pcall(Copy, Key)
-        StatusLabel.Text = "Ключ скопирован!"
-        StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
+        pcall(Copy, LINKVERTISE_URL)
+        StatusLabel.Text = "Ссылка скопирована! Пройди оффер"
+        StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
     else
-        StatusLabel.Text = "Ключ сгенерирован!"
-        StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
+        StatusLabel.Text = LINKVERTISE_URL
+        StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
     end
 end)
 
