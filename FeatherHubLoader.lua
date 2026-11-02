@@ -9,6 +9,12 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main
 local KEYAUTH_APP_NAME = "FeatherHUB - Loader"
 local KEYAUTH_OWNER_ID = "l7G7j8LbHP"
 local KEYAUTH_VERSION = "1.0"
+
+-- Linkvertise ссылка (пользователь проходит оффер → получает ключ)
+-- Создай ссылку на https://linkvertise.com и вставь сюда
+local LINKVERTISE_URL = "https://link-to.net/YOUR_ID"
+
+-- KeyAuth панель (куда пользователь идёт после Linkvertise за ключом)
 local KEYAUTH_PANEL_URL = "https://keyauth.cc/app/?page=licenses"
 
 -- ════════════════════════════════════════════════════════════════
@@ -186,7 +192,9 @@ Instance.new("UICorner", IconBg).CornerRadius = UDim.new(1, 0)
 local FeatherIcon = Instance.new("TextLabel")
 FeatherIcon.Size = UDim2.new(1, 0, 1, 0)
 FeatherIcon.BackgroundTransparency = 1
-FeatherIcon.Text = "🪶"
+FeatherIcon.Text = "F"
+FeatherIcon.TextSize = 22
+FeatherIcon.Font = Enum.Font.GothamBlack
 FeatherIcon.TextSize = 28
 FeatherIcon.Font = Enum.Font.GothamBold
 FeatherIcon.TextColor3 = C.Accent
@@ -270,9 +278,9 @@ local KeyIcon = Instance.new("TextLabel")
 KeyIcon.Size = UDim2.new(0, 20, 0, 20)
 KeyIcon.Position = UDim2.new(0, 12, 0.5, -10)
 KeyIcon.BackgroundTransparency = 1
-KeyIcon.Text = "🔑"
+KeyIcon.Text = ">"
 KeyIcon.TextSize = 14
-KeyIcon.Font = Enum.Font.Gotham
+KeyIcon.Font = Enum.Font.GothamBold
 KeyIcon.TextColor3 = C.TextMuted
 KeyIcon.ZIndex = 2
 KeyIcon.Parent = KeyBox
@@ -383,6 +391,18 @@ end)
 -- UI: КНОПКА "ПОЛУЧИТЬ КЛЮЧ"
 -- ════════════════════════════════════════════════════════════════
 
+-- Подсказка над кнопкой "Получить ключ"
+local HintLabel = Instance.new("TextLabel")
+HintLabel.Size = UDim2.new(0.8, 0, 0, 14)
+HintLabel.Position = UDim2.new(0.1, 0, 0, 322)
+HintLabel.BackgroundTransparency = 1
+HintLabel.Text = "Пройди оффер → получи ключ"
+HintLabel.TextColor3 = C.TextMuted
+HintLabel.TextSize = 10
+HintLabel.Font = Enum.Font.Gotham
+HintLabel.TextXAlignment = Enum.TextXAlignment.Center
+HintLabel.Parent = Card
+
 local GetKeyBtn = Instance.new("TextButton")
 GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 42)
 GetKeyBtn.Position = UDim2.new(0.1, 0, 0, 340)
@@ -406,9 +426,9 @@ local LinkIcon = Instance.new("TextLabel")
 LinkIcon.Size = UDim2.new(0, 16, 0, 16)
 LinkIcon.Position = UDim2.new(0, 12, 0.5, -8)
 LinkIcon.BackgroundTransparency = 1
-LinkIcon.Text = "🔗"
+LinkIcon.Text = ">"
 LinkIcon.TextSize = 12
-LinkIcon.Font = Enum.Font.Gotham
+LinkIcon.Font = Enum.Font.GothamBold
 LinkIcon.TextColor3 = C.Accent
 LinkIcon.ZIndex = 2
 LinkIcon.Parent = GetKeyBtn
@@ -538,7 +558,7 @@ VerifyBtn.MouseButton1Click:Connect(function()
         VerifyBtn.Active = true
 
         if Ok then
-            VerifyBtn.Text = "✓"
+            VerifyBtn.Text = "OK"
             Tween(VerifyBtn, { BackgroundColor3 = C.Success }, TI.Smooth)
             SetStatus(Msg, C.Success)
             task.wait(0.8)
@@ -561,13 +581,30 @@ VerifyBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
+local GetKeyStep = 1 -- 1 = Linkvertise, 2 = KeyAuth
+
 GetKeyBtn.MouseButton1Click:Connect(function()
     local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
-    if type(Copy) == "function" then
-        pcall(Copy, KEYAUTH_PANEL_URL)
-        SetStatus("Ссылка на KeyAuth скопирована", C.Success)
+    if GetKeyStep == 1 then
+        -- Шаг 1: копируем Linkvertise
+        if type(Copy) == "function" then
+            pcall(Copy, LINKVERTISE_URL)
+            SetStatus("Шаг 1/2: пройди оффер по ссылке", C.Accent)
+        else
+            SetStatus(LINKVERTISE_URL, C.Accent)
+        end
+        GetKeyBtn.Text = "Взять ключ"
+        GetKeyStep = 2
     else
-        SetStatus(KEYAUTH_PANEL_URL, C.Accent)
+        -- Шаг 2: копируем KeyAuth
+        if type(Copy) == "function" then
+            pcall(Copy, KEYAUTH_PANEL_URL)
+            SetStatus("Шаг 2/2: вставь ключ из KeyAuth", C.Success)
+        else
+            SetStatus(KEYAUTH_PANEL_URL, C.Accent)
+        end
+        GetKeyBtn.Text = "Получить ключ"
+        GetKeyStep = 1
     end
 end)
 
