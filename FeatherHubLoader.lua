@@ -264,7 +264,7 @@ KeyIcon.TextColor3 = C.TextMuted
 KeyIcon.ZIndex = 2
 KeyIcon.Parent = KeyBox
 
-KeyBox.PaddingLeft = UDim.new(0, 36)
+-- Отступ для иконки внутри поля (через позицию иконки)
 
 -- Подсветка при фокусе
 KeyBox.Focused:Connect(function()
@@ -412,7 +412,7 @@ LinkIcon.TextColor3 = C.Accent
 LinkIcon.ZIndex = 2
 LinkIcon.Parent = GetKeyBtn
 
-GetKeyBtn.PaddingLeft = UDim.new(0, 32)
+-- Отступ для иконки внутри кнопки
 
 GetKeyBtn.MouseEnter:Connect(function()
     Tween(GetKeyBtn, { BackgroundColor3 = C.CardHover }, TI.Quick)
