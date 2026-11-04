@@ -9,20 +9,20 @@ local CONFIG = {
     KeyAuthName  = "FeatherHUB - Loader",    -- Имя приложения в KeyAuth
     KeyAuthOwner = "l7G7j8LbHP",           -- Твой Owner ID
     KeyAuthVer   = "1.0",                  -- Версия (должна совпадать с версией в KeyAuth)
-    Linkvertise  = "https://link-to.net/YOUR_ID",  -- Замени на свою ссылку Linkvertise
+    Linkvertise  = "",                     -- Сайт выдачи ключей пока не подключён
 }
 -- ════════════════════════════════════════════════════════════════
 
 local HttpService = game:GetService("HttpService")
-local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
 
 -- ════════════════════════════════════════════════════════════════
--- KEYAUTH API
+-- KEYAUTH API — КЛЮЧИ НЕ ГЕНЕРИРУЮТСЯ И НЕ ХРАНЯТСЯ В ЛОАДЕРЕ
 -- ════════════════════════════════════════════════════════════════
 local KA_URL = "https://keyauth.win/api/1.2/"
 local Session = nil
+local InitBusy = false
+local VerifyBusy = false
 
 local function Encode(data)
     local parts = {}
@@ -32,113 +32,117 @@ local function Encode(data)
     return table.concat(parts, "&")
 end
 
-local function Decode(json)
-    local ok, result = pcall(HttpService.JSONDecode, HttpService, json)
-    if ok then return result end
+local function GetRequest()
+    if type(request) == "function" then return request end
+    if type(http_request) == "function" then return http_request end
+    if type(syn) == "table" and type(syn.request) == "function" then return syn.request end
+    if type(http) == "table" and type(http.request) == "function" then return http.request end
     return nil
 end
 
--- Инициализация приложения
+local function ApiRequest(data)
+    local Send = GetRequest()
+    if not Send then
+        return nil, "Исполнитель не поддерживает HTTP-запросы"
+    end
+
+    local ok, response = pcall(Send, {
+        Url = KA_URL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
+        Body = Encode(data),
+    })
+    if not ok or type(response) ~= "table" or type(response.Body) ~= "string" then
+        return nil, "Ошибка подключения к KeyAuth"
+    end
+
+    local status = tonumber(response.StatusCode)
+    if not status or status < 200 or status >= 300 then
+        return nil, "Ошибка KeyAuth HTTP " .. tostring(status or "?")
+    end
+    if response.Body == "KeyAuth_Invalid" then
+        return nil, "Приложение KeyAuth не найдено"
+    end
+
+    local decoded, result = pcall(HttpService.JSONDecode, HttpService, response.Body)
+    if not decoded or type(result) ~= "table" or type(result.success) ~= "boolean" then
+        return nil, "Неверный ответ KeyAuth"
+    end
+    return result
+end
+
+local function SetError(StatusLabel, message)
+    if not StatusLabel.Parent then return end
+    StatusLabel.Text = message
+    StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
+end
+
 local function InitKeyAuth(StatusLabel)
-    local body = Encode({
+    if InitBusy then return false end
+    InitBusy = true
+    Session = nil
+    local data, err = ApiRequest({
         type = "init",
         ver = CONFIG.KeyAuthVer,
         name = CONFIG.KeyAuthName,
         ownerid = CONFIG.KeyAuthOwner,
+        enckey = HttpService:GenerateGUID(false):gsub("%-", ""),
     })
+    InitBusy = false
 
-    local ok, response = pcall(function()
-        return game:HttpPost({
-            Url = KA_URL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
-            Body = body,
-        })
-    end)
-
-    if not ok or not response then
-        StatusLabel.Text = "Ошибка подключения к серверу"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        return false
-    end
-
-    local data = Decode(response)
     if not data then
-        StatusLabel.Text = "Ошибка сервера (неверный ответ)"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
+        SetError(StatusLabel, err)
         return false
     end
-
-    if data.success then
+    if data.success == true and type(data.sessionid) == "string" and data.sessionid ~= "" then
         Session = data.sessionid
-        print("[FeatherHub] KeyAuth инициализирован. Сессия: " .. Session)
         return true
-    else
-        StatusLabel.Text = "Ошибка: " .. (data.message or "неизвестная")
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        print("[FeatherHub] KeyAuth init failed: " .. tostring(data.message))
-        return false
     end
+    SetError(StatusLabel, tostring(data.message or "Не удалось создать сессию KeyAuth"))
+    return false
 end
 
--- Проверка лицензионного ключа
 local function VerifyKey(key, StatusLabel)
     if not Session then
-        StatusLabel.Text = "Сервер не инициализирован"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
+        SetError(StatusLabel, "Сервер не подключён")
         return false
     end
 
-    local body = Encode({
+    local params = {
         type = "license",
         key = key,
         sessionid = Session,
         name = CONFIG.KeyAuthName,
         ownerid = CONFIG.KeyAuthOwner,
-    })
-
-    local ok, response = pcall(function()
-        return game:HttpPost({
-            Url = KA_URL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
-            Body = body,
-        })
-    end)
-
-    if not ok or not response then
-        StatusLabel.Text = "Ошибка сети"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        return false
+    }
+    if type(gethwid) == "function" then
+        local ok, hwid = pcall(gethwid)
+        if ok and type(hwid) == "string" and hwid ~= "" then params.hwid = hwid end
     end
 
-    local data = Decode(response)
+    local data, err = ApiRequest(params)
     if not data then
-        StatusLabel.Text = "Ошибка сервера"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
+        SetError(StatusLabel, err)
         return false
     end
+    if data.success == true then return true end
 
-    if data.success then
-        print("[FeatherHub] Ключ подтверждён!")
-        if data.info then
-            print("[FeatherHub] Подписка: " .. tostring(data.info.subscriptions and data.info.subscriptions[1] and data.info.subscriptions[1].subscription or "N/A"))
-        end
-        return true
-    else
-        local msg = data.message or "Неверный ключ"
-        -- Переводим частые ошибки
-        if msg:find("Key not found") or msg:find("does not exist") then
-            msg = "Ключ не найден"
-        elseif msg:find("expired") then
-            msg = "Срок действия ключа истёк"
-        elseif msg:find("banned") then
-            msg = "Ключ заблокирован"
-        end
-        StatusLabel.Text = msg
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        return false
+    local msg = tostring(data.message or "Неверный ключ")
+    local lower = msg:lower()
+    if lower:find("session", 1, true) then
+        Session = nil
+        msg = "Сессия истекла. Нажми «Подтвердить» ещё раз"
+    elseif lower:find("hwid", 1, true) then
+        msg = "Ошибка привязки устройства (HWID)"
+    elseif lower:find("key not found", 1, true) or lower:find("does not exist", 1, true) then
+        msg = "Ключ не найден"
+    elseif lower:find("expired", 1, true) then
+        msg = "Срок действия ключа истёк"
+    elseif lower:find("banned", 1, true) then
+        msg = "Ключ заблокирован"
     end
+    SetError(StatusLabel, msg)
+    return false
 end
 
 -- ════════════════════════════════════════════════════════════════
@@ -291,7 +295,7 @@ local HintLabel = Instance.new("TextLabel")
 HintLabel.Size = UDim2.new(0.8, 0, 0, 20)
 HintLabel.Position = UDim2.new(0.1, 0, 0, 355)
 HintLabel.BackgroundTransparency = 1
-HintLabel.Text = "Пройди Linkvertise → получи ключ"
+HintLabel.Text = CONFIG.Linkvertise ~= "" and "Пройди Linkvertise → получи ключ" or "Пока можно ввести имеющийся ключ KeyAuth"
 HintLabel.TextColor3 = Color3.fromRGB(100, 116, 139)
 HintLabel.TextSize = 12
 HintLabel.Font = Enum.Font.Gotham
@@ -314,61 +318,80 @@ Footer.Parent = Card
 
 -- Функция подтверждения (вызывается из двух мест)
 local function DoVerify()
-    if not Session then
-        StatusLabel.Text = "Сервер не подключён"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
-        return
-    end
+    if VerifyBusy or InitBusy or not Gui.Parent then return end
 
     local key = KeyBox.Text:gsub("%s+", "")
     if key == "" then
-        StatusLabel.Text = "Введите ключ"
-        StatusLabel.TextColor3 = Color3.fromRGB(248, 113, 113)
+        SetError(StatusLabel, "Введите ключ")
         return
     end
 
-    -- Показываем загрузку
+    VerifyBusy = true
     VerifyBtn.Text = "Проверка..."
     VerifyBtn.BackgroundColor3 = Color3.fromRGB(100, 116, 139)
     VerifyBtn.AutoButtonColor = false
+    StatusLabel.Text = "Проверка ключа на сервере..."
+    StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
 
-    local success = VerifyKey(key, StatusLabel)
+    local ran, success = pcall(function()
+        if not Session and not InitKeyAuth(StatusLabel) then return false end
+        return VerifyKey(key, StatusLabel)
+    end)
+    if not Gui.Parent then
+        VerifyBusy = false
+        return
+    end
+    if not ran then
+        InitBusy = false
+        SetError(StatusLabel, "Ошибка проверки. Попробуй ещё раз")
+        success = false
+    end
 
-    if success then
+    if success == true then
         StatusLabel.Text = "Ключ подтверждён! Загрузка..."
         StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
         VerifyBtn.BackgroundColor3 = Color3.fromRGB(74, 222, 128)
-        task.wait(1.5)
-        Gui:Destroy()
-        loadstring(game:HttpGet(CONFIG.ScriptURL))()
-    else
-        VerifyBtn.Text = "Подтвердить"
-        VerifyBtn.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
-        VerifyBtn.AutoButtonColor = true
+        local loaded, err = pcall(function()
+            local source = game:HttpGet(CONFIG.ScriptURL)
+            local chunk, compileError = loadstring(source)
+            assert(chunk, compileError)
+            chunk()
+        end)
+        if loaded then
+            Gui:Destroy()
+            return
+        end
+        warn("[FeatherHub] Ошибка загрузки скрипта: " .. tostring(err))
+        SetError(StatusLabel, "Не удалось загрузить FeatherHub. Повтори")
     end
+
+    VerifyBusy = false
+    VerifyBtn.Text = "Подтвердить"
+    VerifyBtn.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
+    VerifyBtn.AutoButtonColor = true
 end
 
--- Получить ключ — копируем ссылку Linkvertise
+-- Ссылка станет доступна после подключения сайта выдачи ключей
 GetKeyBtn.MouseButton1Click:Connect(function()
+    if VerifyBusy or InitBusy then return end
     local url = CONFIG.Linkvertise
-    local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
-
-    if type(Copy) == "function" then
-        pcall(Copy, url)
-        StatusLabel.Text = "Ссылка скопирована! Пройди оффер"
-        StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
-    else
-        StatusLabel.Text = "Скопируй ссылку из чата"
-        StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
-        print("[FeatherHub] Linkvertise URL: " .. url)
+    if type(url) ~= "string" or not url:match("^https://") or url:find("YOUR_ID", 1, true) then
+        SetError(StatusLabel, "Сайт выдачи ключей ещё не подключён")
+        return
     end
 
-    -- Пытаемся открыть в браузере
-    pcall(function()
-        if game:GetService("GuiService"):GetGameplayBlocked() == false then
-            -- Не работает в Roblox напрямую, но пробуем
+    local Copy = type(setclipboard) == "function" and setclipboard or toclipboard
+    if type(Copy) == "function" then
+        local copied = pcall(Copy, url)
+        if copied then
+            StatusLabel.Text = "Ссылка на получение ключа скопирована"
+            StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
+            return
         end
-    end)
+    end
+    StatusLabel.Text = "Ссылка выведена в консоль исполнителя"
+    StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
+    print("[FeatherHub] Получить ключ: " .. url)
 end)
 
 -- Подтвердить ключ
@@ -395,12 +418,15 @@ task.spawn(function()
     StatusLabel.Text = "Подключение..."
     StatusLabel.TextColor3 = Color3.fromRGB(125, 211, 252)
 
-    local ok = InitKeyAuth(StatusLabel)
-    if ok then
+    local ran, ok = pcall(InitKeyAuth, StatusLabel)
+    if not ran then
+        InitBusy = false
+        SetError(StatusLabel, "Не удалось подключиться. Нажми «Подтвердить»")
+        return
+    end
+    if ok and StatusLabel.Parent and not VerifyBusy then
         StatusLabel.Text = "Готово! Введи ключ"
         StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
-        task.wait(2)
-        StatusLabel.Text = ""
     end
 end)
 
