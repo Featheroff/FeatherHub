@@ -1,0 +1,12 @@
+{
+  "name": "featherhub-keys",
+  "main": "worker.js",
+  "compatibility_date": "2024-12-01",
+  "d1_databases": [
+    {
+      "binding": "featherhub_keys",
+      "database_name": "featherhub-keys",
+      "database_id": "9ee7b7cb-3d98-4a44-add2-0e7b780243d9"
+    }
+  ]
+}

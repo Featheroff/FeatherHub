@@ -1028,155 +1028,85 @@ local Interface = {
     Library = loadstring(game:HttpGet(ObsidianBaseUrl .. "Library.lua"))(),
     SaveManager = loadstring(game:HttpGet(ObsidianBaseUrl .. "addons/SaveManager.lua"))(),
     ThemeManager = loadstring(game:HttpGet(ObsidianBaseUrl .. "addons/ThemeManager.lua"))(),
-    Language = "RU", -- Язык интерфейса: "RU" или "EN"
+    Language = "EN",
 }
 
--- ════════════════════════════════════════════════════════════════
--- ВЫБОР ЯЗЫКА (Language Selection Dialog)
--- ════════════════════════════════════════════════════════════════
+-- Loader preference wins; malformed/unavailable user data never blocks startup.
 do
-    local Library = Interface.Library
-    
-    -- Создаём диалог выбора языка перед основным окном
-    local LanguageGui = Instance.new("ScreenGui")
-    LanguageGui.Name = "FeatherHubLanguageSelect"
-    LanguageGui.ResetOnSpawn = false
-    LanguageGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    LanguageGui.DisplayOrder = 100
-    LanguageGui.Parent = game:GetService("CoreGui")
-    
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 350, 0, 200)
-    MainFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(16, 24, 39)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Parent = LanguageGui
-    
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 12)
-    UICorner.Parent = MainFrame
-    
-    local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(125, 211, 252)
-    UIStroke.Thickness = 2
-    UIStroke.Parent = MainFrame
-    
-    -- Заголовок
-    local Title = Instance.new("TextLabel")
-    Title.Name = "Title"
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.Position = UDim2.new(0, 0, 0, 15)
-    Title.BackgroundTransparency = 1
-    Title.Text = "FeatherHub"
-    Title.TextColor3 = Color3.fromRGB(125, 211, 252)
-    Title.TextSize = 24
-    Title.Font = Enum.Font.GothamBold
-    Title.Parent = MainFrame
-    
-    local Subtitle = Instance.new("TextLabel")
-    Subtitle.Name = "Subtitle"
-    Subtitle.Size = UDim2.new(1, 0, 0, 25)
-    Subtitle.Position = UDim2.new(0, 0, 0, 55)
-    Subtitle.BackgroundTransparency = 1
-    Subtitle.Text = "Select Language / Выберите язык"
-    Subtitle.TextColor3 = Color3.fromRGB(148, 163, 184)
-    Subtitle.TextSize = 14
-    Subtitle.Font = Enum.Font.Gotham
-    Subtitle.Parent = MainFrame
-    
-    -- Кнопка English
-    local ENButton = Instance.new("TextButton")
-    ENButton.Name = "ENButton"
-    ENButton.Size = UDim2.new(0.4, 0, 0, 50)
-    ENButton.Position = UDim2.new(0.05, 0, 0, 100)
-    ENButton.BackgroundColor3 = Color3.fromRGB(30, 41, 59)
-    ENButton.BorderSizePixel = 0
-    ENButton.Text = "English"
-    ENButton.TextColor3 = Color3.fromRGB(231, 237, 247)
-    ENButton.TextSize = 18
-    ENButton.Font = Enum.Font.GothamBold
-    ENButton.AutoButtonColor = true
-    ENButton.Parent = MainFrame
-    
-    local ENCorner = Instance.new("UICorner")
-    ENCorner.CornerRadius = UDim.new(0, 8)
-    ENCorner.Parent = ENButton
-    
-    local ENStroke = Instance.new("UIStroke")
-    ENStroke.Color = Color3.fromRGB(45, 64, 91)
-    ENStroke.Thickness = 2
-    ENStroke.Parent = ENButton
-    
-    -- Кнопка Русский
-    local RUButton = Instance.new("TextButton")
-    RUButton.Name = "RUButton"
-    RUButton.Size = UDim2.new(0.4, 0, 0, 50)
-    RUButton.Position = UDim2.new(0.55, 0, 0, 100)
-    RUButton.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
-    RUButton.BorderSizePixel = 0
-    RUButton.Text = "Русский"
-    RUButton.TextColor3 = Color3.fromRGB(16, 24, 39)
-    RUButton.TextSize = 18
-    RUButton.Font = Enum.Font.GothamBold
-    RUButton.AutoButtonColor = true
-    RUButton.Parent = MainFrame
-    
-    local RUCorner = Instance.new("UICorner")
-    RUCorner.CornerRadius = UDim.new(0, 8)
-    RUCorner.Parent = RUButton
-    
-    local RUStroke = Instance.new("UIStroke")
-    RUStroke.Color = Color3.fromRGB(125, 211, 252)
-    RUStroke.Thickness = 2
-    RUStroke.Parent = RUButton
-    
-    -- Обработчики кнопок
-    local LanguageSelected = false
-    
-    ENButton.MouseButton1Click:Connect(function()
-        if LanguageSelected then return end
-        LanguageSelected = true
-        Interface.Language = "EN"
-        
-        -- Анимация выбора
-        ENStroke.Color = Color3.fromRGB(125, 211, 252)
-        ENButton.BackgroundColor3 = Color3.fromRGB(125, 211, 252)
-        ENButton.TextColor3 = Color3.fromRGB(16, 24, 39)
-        
-        task.wait(0.3)
-        LanguageGui:Destroy()
-    end)
-    
-    RUButton.MouseButton1Click:Connect(function()
-        if LanguageSelected then return end
-        LanguageSelected = true
-        Interface.Language = "RU"
-        
-        -- Анимация выбора
-        RUStroke.Color = Color3.fromRGB(74, 222, 128)
-        RUButton.BackgroundColor3 = Color3.fromRGB(74, 222, 128)
-        
-        task.wait(0.3)
-        LanguageGui:Destroy()
-    end)
-    
-    -- Ожидаем выбора языка (таймаут 60 секунд, потом RU по умолчанию)
-    local StartTime = tick()
-    while not LanguageSelected and (tick() - StartTime) < 60 do
-        task.wait(0.1)
+    local function ValidLanguage(Value)
+        return Value == "EN" or Value == "RU"
     end
-    
-    -- Если таймаут, используем RU
-    if not LanguageSelected then
-        Interface.Language = "RU"
-        LanguageGui:Destroy()
+    local function ReadUserData()
+        if type(Environment.isfile) ~= "function" or type(Environment.readfile) ~= "function" then return nil end
+        local Success, Data = pcall(function()
+            if not Environment.isfile("RushHub/UserData.json") then return nil end
+            return game:GetService("HttpService"):JSONDecode(Environment.readfile("RushHub/UserData.json"))
+        end)
+        return Success and type(Data) == "table" and Data or nil
     end
-    
-    print("[FeatherHub] Language selected: " .. Interface.Language)
+    Interface.PersistLanguage = function()
+        if type(Environment.writefile) ~= "function" then return false end
+        local Data = ReadUserData()
+        -- Only merge into the existing file. Never replace unreadable data with defaults.
+        if not Data then return false end
+        Data.Language = Interface.Language
+        return pcall(function()
+            Environment.writefile("RushHub/UserData.json", game:GetService("HttpService"):JSONEncode(Data))
+        end)
+    end
+    local Preference = getgenv().FeatherHubLanguage
+    if not ValidLanguage(Preference) then
+        local Data = ReadUserData()
+        Preference = Data and Data.Language
+    end
+    if not ValidLanguage(Preference) then
+        local Success, Locale = pcall(function()
+            local Player = game:GetService("Players").LocalPlayer
+            local PlayerLocale = Player and Player.LocaleId
+            if type(PlayerLocale) == "string" and PlayerLocale ~= "" then return PlayerLocale end
+            return game:GetService("LocalizationService").RobloxLocaleId
+        end)
+        Preference = Success and type(Locale) == "string" and Locale:lower():sub(1, 2) == "ru" and "RU" or "EN"
+    end
+    Interface.Language = Preference
+    getgenv().FeatherHubLanguage = Preference
 end
 
--- Локализация только GUI: значения контролов, ввод и игровые строки не меняются.
+-- SetLanguage: switch UI language at runtime and persist the choice.
+do
+    local Updating = false
+    function Interface.SetLanguage(NewLang)
+        if Updating then return end
+        if NewLang ~= "EN" and NewLang ~= "RU" then return end
+        if NewLang == Interface.Language then return end
+        Updating = true
+        Interface.Language = NewLang
+        getgenv().FeatherHubLanguage = NewLang
+        Interface.PersistLanguage()
+        -- Rebuild the UI with the new language. The library will be re-initialized.
+        if Interface.Library and Interface.Library.Unload then
+            pcall(function() Interface.Library:Unload() end)
+        end
+        Updating = false
+        -- Reload the script to apply the language change.
+        local ScriptURL = "https://raw.githubusercontent.com/Featheroff/FeatherHub/main/FeatherHub.lua"
+        task.spawn(function()
+            local Success, Source = pcall(game.HttpGet, game, ScriptURL)
+            if Success and type(Source) == "string" then
+                local Chunk, CompileError = loadstring(Source)
+                if Chunk then
+                    Chunk()
+                else
+                    warn("[FeatherHub] Failed to compile after language change: " .. tostring(CompileError))
+                end
+            else
+                warn("[FeatherHub] Failed to reload after language change: " .. tostring(Source))
+            end
+        end)
+    end
+end
+
+-- Localize GUI display only; control values, input and gameplay strings stay intact.
 do
     local Library = Interface.Library
     local Translations = {
@@ -1195,7 +1125,10 @@ do
         ["Discord invite copied."] = "Приглашение в Discord скопировано.",
         ["Settings"] = "Настройки",
         ["Menu"] = "Меню",
+        ["Interface Language"] = "Язык интерфейса",
         ["Open Keybind Menu"] = "Показать меню горячих клавиш",
+        ["Show FPS & Ping"] = "Показывать FPS и пинг",
+        ["Show or hide the FeatherHub stats overlay."] = "Показать или скрыть панель статистики FeatherHub.",
         ["Custom Cursor"] = "Свой курсор",
         ["Queue On Teleport"] = "Загрузка после телепорта",
         ["Automatically reloads FeatherHub when you teleport to another server."] = "Автоматически загружает FeatherHub после телепорта на другой сервер.",
@@ -1203,6 +1136,7 @@ do
         ["DPI Scale"] = "Масштаб интерфейса",
         ["Menu bind"] = "Клавиша меню",
         ["Menu keybind"] = "Клавиша меню",
+        ["Unload Script"] = "Выгрузить скрипт",
         ["Unload"] = "Выгрузить скрипт",
         ["Ping: 0ms"] = "Пинг: 0 мс",
         ["Ping: %dms"] = "Пинг: %d мс",
@@ -1790,6 +1724,117 @@ do
         ["Donut"] = "Пончик", ["Lotus"] = "Лотос", ["Boxing Gloves"] = "Боксёрские перчатки",
     }
     for Name, Text in pairs(ItemTranslations) do Translations[Name] = Text end
+    -- Custom UI and diagnostic captions not present in the upstream dictionary.
+    local CustomTranslations = {
+        ["Interface language"] = "Язык интерфейса",
+        ["Change the interface language immediately, without reloading."] = "Меняет язык интерфейса сразу, без перезагрузки.",
+        ["Show FPS and ping"] = "Показывать FPS и пинг",
+        ["Show or hide the FeatherHub stats overlay."] = "Показать или скрыть панель статистики FeatherHub.",
+        ["Copies the FeatherHub Discord server invite."] = "Копирует приглашение на Discord-сервер FeatherHub.",
+        ["Invite copied. Open the link in your browser:"] = "Приглашение скопировано. Открой ссылку в браузере:",
+        ["Failed to copy invite. Open the link manually:"] = "Не удалось скопировать приглашение. Открой ссылку вручную:",
+        ["DOORS · English interface"] = "DOORS · Русский интерфейс",
+        ["Created by Feather"] = "Создано Feather",
+        ["FeatherHub settings"] = "Настройки FeatherHub",
+        ["EN/RU language selection"] = "Выбор языка EN/RU",
+        ["Added the Stairwell tab"] = "Добавлена вкладка «Лестница»",
+        ["Duplicate execution protection"] = "Защита от повторного запуска",
+        ["Sally Toy added to the item list"] = "Игрушка Sally в список предметов",
+        ["Archives crates excluded from auto interact"] = "Исключение ящиков Архивов в автовзаимодействии",
+        ["Cellar support"] = "Поддержка подвала",
+        ["Optimization settings in the General tab"] = "Настройки оптимизации во вкладке «Основное»",
+        ["FPS and ping overlay"] = "Панель FPS и пинга",
+        ["Increased window rounding"] = "Увеличено скругление окна",
+        ["Improved unload cleanup"] = "Улучшена очистка при выгрузке",
+        ["Improved Archives object interaction"] = "Улучшено взаимодействие с объектами Архивов",
+        ["Fixed multiplayer ESP FPS drops"] = "Исправлено падение FPS из-за ESP в мультиплеере",
+        ["— thanks for using"] = "— спасибо за использование",
+        ["Test Results"] = "Результаты проверки",
+        ["test skipped"] = "тест пропущен",
+        ["function missing"] = "функция отсутствует",
+        ["test timed out"] = "время проверки истекло",
+        ["No table returned"] = "Не возвращена таблица",
+        ["Failed to set global variable"] = "Не удалось задать глобальную переменную",
+        ["No environment table returned"] = "Не возвращена таблица окружения",
+        ["getrenv is an alias of getgenv"] = "getrenv является псевдонимом getgenv",
+        ["Executor environment returned"] = "Возвращено окружение исполнителя",
+        ["Calling loadstring from the Roblox environment must error"] = "Вызов loadstring из окружения Roblox должен вызывать ошибку",
+        ["Failed to find table"] = "Не удалось найти таблицу",
+        ["Failed to find function"] = "Не удалось найти функцию",
+        ["Calling with false must not return the table"] = "При вызове с false таблица не должна возвращаться",
+        ["No string returned"] = "Не возвращена строка",
+        ["Response code must be 200"] = "Код ответа должен быть 200",
+        ["Response body must be a string"] = "Тело ответа должно быть строкой",
+        ["Must return an Instance"] = "Должен возвращаться Instance",
+        ["Clone must differ from original"] = "Копия не должна совпадать с оригиналом",
+        ["Changing the original did not change the clone"] = "Изменение оригинала не изменило копию",
+        ["No valid GUI container returned"] = "Не возвращён допустимый контейнер GUI",
+        ["No function returned"] = "Не возвращена функция",
+        ["No callback value returned"] = "Не возвращено значение обратного вызова",
+        ["No Instance returned"] = "Не возвращён Instance",
+        ["No Instance with nil parent returned"] = "Не возвращён Instance с родителем nil",
+        ["Returned an Instance with non-nil parent"] = "Возвращён Instance с родителем, отличным от nil",
+        ["Failed to trigger interaction"] = "Не удалось активировать взаимодействие",
+        ["Failed to trigger click detector"] = "Не удалось активировать детектор клика",
+        ["Failed to trigger touch event"] = "Не удалось активировать событие касания",
+        ["Original function returned"] = "Возвращена исходная функция",
+        ["Clone returned a different value from the original"] = "Копия вернула не то же значение, что оригинал",
+        ["Returned a different value from the original"] = "Возвращено не то же значение, что у оригинала",
+        ["No correct value returned"] = "Не возвращено правильное значение",
+        ["No C function returned"] = "Не возвращена функция C",
+        ["Original and hook are the same function"] = "Оригинал и перехватчик являются одной функцией",
+        ["Hooked C function is no longer a C function"] = "Перехваченная функция C больше не является функцией C",
+        ["Return value did not change"] = "Возвращаемое значение не изменилось",
+        ["No original function returned"] = "Не возвращена исходная функция",
+        ["No original C function returned"] = "Не возвращена исходная функция C",
+        ["Failed to restore function"] = "Не удалось снять перехват функции",
+        ["No true returned for hooked function"] = "Не возвращено true для перехваченной функции",
+        ["No false returned for unhooked function"] = "Не возвращено false для функции без перехвата",
+        ["No true returned for executor function"] = "Не возвращено true для функции исполнителя",
+        ["No true returned for global executor function"] = "Не возвращено true для глобальной функции исполнителя",
+        ["No false returned for global Roblox function"] = "Не возвращено false для глобальной функции Roblox",
+        ["No true returned for executor C function"] = "Не возвращено true для функции C исполнителя",
+        ["No correct method returned"] = "Не возвращён правильный метод",
+        ["Failed to hook metamethod"] = "Не удалось перехватить метаметод",
+        ["No metatable returned"] = "Не возвращена метатаблица",
+        ["Failed to set metatable"] = "Не удалось задать метатаблицу",
+        ["No false returned for mutable table"] = "Не возвращено false для изменяемой таблицы",
+        ["No true returned for read-only table"] = "Не возвращено true для таблицы только для чтения",
+        ["Failed to set read-only mode"] = "Не удалось задать режим только для чтения",
+        ["Drawing.new is not a function"] = "Drawing.new не является функцией",
+        ["Drawing.Fonts is not a table"] = "Drawing.Fonts не является таблицей",
+        ["Failed to create file"] = "Не удалось создать файл",
+        ["File does not contain expected data"] = "Файл не содержит ожидаемых данных",
+        ["No true returned for existing file"] = "Не возвращено true для существующего файла",
+        ["Expected data not returned"] = "Не возвращены ожидаемые данные",
+        ["Failed to append file contents"] = "Не удалось дописать содержимое файла",
+        ["Failed to load and execute file"] = "Не удалось загрузить и выполнить файл",
+        ["Failed to delete file"] = "Не удалось удалить файл",
+        ["Failed to create folder"] = "Не удалось создать папку",
+        ["Failed to delete folder"] = "Не удалось удалить папку",
+        ["Incorrect file count returned"] = "Не возвращено правильное число файлов",
+        ["First file not returned"] = "Не возвращён первый файл",
+        ["Second file not returned"] = "Не возвращён второй файл",
+        ["Must return an rbxasset identifier"] = "Должен возвращаться идентификатор rbxasset",
+        ["Failed to load PNG image"] = "Не удалось загрузить изображение PNG",
+        ["Incorrect property value returned"] = "Не возвращено правильное значение свойства",
+        ["Failed to set hidden property"] = "Не удалось задать скрытое свойство",
+        ["No number returned"] = "Не возвращено число",
+        ["Invalid identity returned"] = "Возвращён недопустимый уровень доступа",
+        ["Capabilities do not match the specified identity"] = "Возможности не соответствуют заданному уровню доступа",
+        ["Skipped: no anchored part available for testing"] = "Пропущено: нет закреплённой детали для проверки",
+        ["No true returned for client-owned part"] = "Не возвращено true для детали, принадлежащей клиенту",
+        ["No false returned for non-client-owned part"] = "Не возвращено false для детали, не принадлежащей клиенту",
+        ["No true returned for anchored client-owned part"] = "Не возвращено true для закреплённой детали, принадлежащей клиенту",
+        ["Failed to fire signal"] = "Не удалось вызвать сигнал",
+        ["Signal fired with incorrect data"] = "Сигнал вызван с неверными данными",
+        ["Invalid arguments did not cause an error"] = "Неверные аргументы не вызвали ошибку",
+        ["Failed to fire connection signals"] = "Не удалось вызвать сигналы соединения",
+        ["Failed to modify module values"] = "Не удалось изменить значения модуля",
+    }
+    for English, Russian in pairs(CustomTranslations) do Translations[English] = Russian end
+    -- URLs and arbitrary data are not localization keys.
+    Translations["dsc.gg/rushhub"] = nil
     Translations["Velocity"] = "Скорость"
     Translations["Pivot"] = "Позиция"
     local Modes = {
@@ -2133,25 +2178,37 @@ Interface.ApplySettingsTab = function(Window)
     local SettingsTab = Window:AddTab(Interface.Language == "RU" and "Настройки" or "Settings", "settings")
     local MenuGroup = SettingsTab:AddLeftGroupbox(Interface.Language == "RU" and "Меню" or "Menu")
 
+    MenuGroup:AddDropdown("InterfaceLanguage", {
+        Text = Interface.Language == "RU" and "Язык интерфейса" or "Interface Language",
+        Values = { "English", "Русский" },
+        Default = Interface.Language == "RU" and "Русский" or "English",
+        Callback = function(Value)
+            local NewLang = Value == "Русский" and "RU" or "EN"
+            if NewLang ~= Interface.Language then
+                Interface.SetLanguage(NewLang)
+            end
+        end,
+    })
+
     MenuGroup:AddToggle("KeybindMenuOpen", {
-        Default = Library.KeybindFrame.Visible, Text = "Показать меню горячих клавиш",
+        Default = Library.KeybindFrame.Visible, Text = "Open Keybind Menu",
         Callback = function(value) Library.KeybindFrame.Visible = value end,
     })
     MenuGroup:AddToggle("ShowStatsOverlay", {
-        Text = "Показывать FPS и пинг", Default = true,
-        Tooltip = "Показать или скрыть панель статистики FeatherHub.",
+        Text = "Show FPS & Ping", Default = true,
+        Tooltip = "Show or hide the FeatherHub stats overlay.",
         Callback = function(Value)
             local Hub = getgenv().FeatherHub
             if Hub and Hub.StatsGui then Hub.StatsGui.Enabled = Value end
         end,
     })
     MenuGroup:AddToggle("ShowCustomCursor", {
-        Text = "Свой курсор", Default = false,
+        Text = "Custom Cursor", Default = false,
         Callback = function(Value) Library.ShowCustomCursor = Value end,
     })
     MenuGroup:AddToggle("QueueOnTeleport", {
-        Text = "Загрузка после телепорта", Default = false,
-        Tooltip = "Автоматически загружает FeatherHub после телепорта на другой сервер.",
+        Text = "Queue On Teleport", Default = false,
+        Tooltip = "Automatically reloads FeatherHub when you teleport to another server.",
         Callback = function(Value)
             if not Value then return end
             if queue_on_teleport then
@@ -2160,7 +2217,7 @@ Interface.ApplySettingsTab = function(Window)
         end,
     })
     MenuGroup:AddDropdown("UILibrary", {
-        Text = "Стиль интерфейса", Values = { "Obsidian", "Linoria" },
+        Text = "UI Style", Values = { "Obsidian", "Linoria" },
         Default = (getgenv().FeatherHub.UILibrary == "Linoria" and 2 or 1),
         Callback = function(Value)
             if getgenv().FeatherHub.Environment.writefile and getgenv().FeatherHub.Environment.readfile then
@@ -2179,20 +2236,20 @@ Interface.ApplySettingsTab = function(Window)
         end
     })
     MenuGroup:AddDropdown("DPIDropdown", {
-        Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" }, Default = "100%", Text = "Масштаб интерфейса",
+        Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" }, Default = "100%", Text = "DPI Scale",
         Callback = function(Value)
             Value = Value:gsub("%%", "")
             Library:SetDPIScale(tonumber(Value))
         end,
     })
     MenuGroup:AddDivider()
-    MenuGroup:AddLabel("Клавиша меню"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Клавиша меню" })
+    MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu bind" })
     MenuGroup:AddButton({
         Text = "Discord", Icon = "link",
-        Tooltip = "Копирует приглашение на Discord-сервер FeatherHub.",
+        Tooltip = "Copies the FeatherHub Discord server invite.",
         Func = Interface.CopyDiscordInvite,
     })
-    MenuGroup:AddButton("Выгрузить скрипт", function() Library:Unload() end)
+    MenuGroup:AddButton("Unload Script", function() Library:Unload() end)
 
     Library.ToggleKeybind = Options.MenuKeybind
     ThemeManager:SetLibrary(Library)
