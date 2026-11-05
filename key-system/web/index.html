@@ -491,7 +491,9 @@ function render(data) {
     $('step2').className = 'current';
     $('step3').className = '';
     $('heading').textContent = t('checkpoint_heading');
+    $('heading').dataset.i18n = 'checkpoint_heading';
     $('description').textContent = t('checkpoint_description');
+    $('description').dataset.i18n = 'checkpoint_description';
     $('checkpoint').href = url.href;
     $('checkpoint').hidden = false;
     status('');
@@ -502,7 +504,9 @@ function render(data) {
     }, 30000);
   } else if (data.stage === 'none') {
     $('heading').textContent = t('none_heading');
+    $('heading').dataset.i18n = 'none_heading';
     $('description').textContent = t('none_description');
+    $('description').dataset.i18n = 'none_description';
     status('');
   } else throw new Error('request_failed');
 }
