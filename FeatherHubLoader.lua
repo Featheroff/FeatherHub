@@ -237,7 +237,7 @@ Shadow.Parent = ShadowHolder
 local Card = Instance.new("Frame")
 Card.Size = UDim2.new(0, 420, 0, 520)
 Card.Position = UDim2.new(0.5, -210, 0.5, -260)
-Card.BackgroundColor3 = Color3.fromRGB(30, 36, 56)
+Card.BackgroundColor3 = Color3.fromRGB(55, 62, 85)
 Card.BorderSizePixel = 0
 Card.ClipsDescendants = true
 Card.Parent = Gui
@@ -246,73 +246,73 @@ Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 20)
 
 local CardStroke = Instance.new("UIStroke", Card)
 CardStroke.Color = Color3.fromRGB(125, 211, 252)
-CardStroke.Transparency = 0.5
+CardStroke.Transparency = 0.4
 CardStroke.Thickness = 1.5
 
 -- Градиент карточки
 local CardGrad = Instance.new("UIGradient", Card)
 CardGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(38, 46, 72)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 36, 56)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(24, 30, 48)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(65, 74, 100)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(55, 62, 85)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 52, 72)),
 })
 CardGrad.Rotation = 135
 
--- Кнопки управления окном
+-- Кнопка языка (слева вверху)
+local LanguageBtn = Instance.new("TextButton")
+LanguageBtn.Name = "LanguageSwitch"
+LanguageBtn.Size = UDim2.new(0, 72, 0, 26)
+LanguageBtn.Position = UDim2.new(0, 14, 0, 12)
+LanguageBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
+LanguageBtn.BackgroundTransparency = 0.15
+LanguageBtn.BorderSizePixel = 0
+LanguageBtn.Text = Language == "RU" and "RU / EN" or "ru / EN"
+LanguageBtn.TextColor3 = Color3.fromRGB(180, 220, 255)
+LanguageBtn.TextSize = 11
+LanguageBtn.Font = Enum.Font.GothamBold
+LanguageBtn.Parent = Card
+Instance.new("UICorner", LanguageBtn).CornerRadius = UDim.new(0, 8)
+local LangStroke = Instance.new("UIStroke", LanguageBtn)
+LangStroke.Color = Color3.fromRGB(125, 211, 252)
+LangStroke.Transparency = 0.4
+LangStroke.Thickness = 1
+
+-- Кнопки управления окном (справа вверху, разнесены)
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
-MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
-MinimizeBtn.Position = UDim2.new(1, -70, 0, 10)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 50, 75)
-MinimizeBtn.BackgroundTransparency = 0.2
+MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+MinimizeBtn.Position = UDim2.new(1, -72, 0, 10)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
+MinimizeBtn.BackgroundTransparency = 0.15
 MinimizeBtn.BorderSizePixel = 0
 MinimizeBtn.Text = "—"
-MinimizeBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
-MinimizeBtn.TextSize = 18
+MinimizeBtn.TextColor3 = Color3.fromRGB(180, 220, 255)
+MinimizeBtn.TextSize = 20
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.Parent = Card
-Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 8)
 local MinStroke = Instance.new("UIStroke", MinimizeBtn)
 MinStroke.Color = Color3.fromRGB(125, 211, 252)
-MinStroke.Transparency = 0.4
+MinStroke.Transparency = 0.35
 MinStroke.Thickness = 1
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Name = "CloseBtn"
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position = UDim2.new(1, -38, 0, 10)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 50, 75)
-CloseBtn.BackgroundTransparency = 0.2
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -36, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
+CloseBtn.BackgroundTransparency = 0.15
 CloseBtn.BorderSizePixel = 0
 CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(248, 113, 113)
-CloseBtn.TextSize = 14
+CloseBtn.TextColor3 = Color3.fromRGB(255, 130, 130)
+CloseBtn.TextSize = 15
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = Card
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 local CloseStroke = Instance.new("UIStroke", CloseBtn)
 CloseStroke.Color = Color3.fromRGB(248, 113, 113)
-CloseStroke.Transparency = 0.5
+CloseStroke.Transparency = 0.4
 CloseStroke.Thickness = 1
-
--- Кнопка языка
-local LanguageBtn = Instance.new("TextButton")
-LanguageBtn.Name = "LanguageSwitch"
-LanguageBtn.Size = UDim2.new(0, 70, 0, 24)
-LanguageBtn.Position = UDim2.new(1, -80, 0, 12)
-LanguageBtn.BackgroundColor3 = Color3.fromRGB(40, 50, 75)
-LanguageBtn.BackgroundTransparency = 0.2
-LanguageBtn.BorderSizePixel = 0
-LanguageBtn.Text = Language == "RU" and "RU / EN" or "ru / EN"
-LanguageBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
-LanguageBtn.TextSize = 10
-LanguageBtn.Font = Enum.Font.GothamBold
-LanguageBtn.Parent = Card
-Instance.new("UICorner", LanguageBtn).CornerRadius = UDim.new(0, 6)
-local LangStroke = Instance.new("UIStroke", LanguageBtn)
-LangStroke.Color = Color3.fromRGB(125, 211, 252)
-LangStroke.Transparency = 0.5
-LangStroke.Thickness = 1
 
 -- Иконка с свечением
 local IconGlow = Instance.new("Frame")
@@ -327,7 +327,7 @@ Instance.new("UICorner", IconGlow).CornerRadius = UDim.new(1, 0)
 local IconHolder = Instance.new("Frame")
 IconHolder.Size = UDim2.new(0, 64, 0, 64)
 IconHolder.Position = UDim2.new(0.5, -32, 0, 20)
-IconHolder.BackgroundColor3 = Color3.fromRGB(40, 52, 80)
+IconHolder.BackgroundColor3 = Color3.fromRGB(65, 76, 105)
 IconHolder.BorderSizePixel = 0
 IconHolder.Parent = Card
 Instance.new("UICorner", IconHolder).CornerRadius = UDim.new(1, 0)
@@ -358,7 +358,7 @@ Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Position = UDim2.new(0, 0, 0, 95)
 Title.BackgroundTransparency = 1
 Title.Text = "FeatherHub"
-Title.TextColor3 = Color3.fromRGB(240, 245, 255)
+Title.TextColor3 = Color3.fromRGB(245, 248, 255)
 Title.TextSize = 28
 Title.Font = Enum.Font.GothamBold
 Title.Parent = Card
@@ -368,7 +368,7 @@ Subtitle.Size = UDim2.new(1, 0, 0, 20)
 Subtitle.Position = UDim2.new(0, 0, 0, 128)
 Subtitle.BackgroundTransparency = 1
 Subtitle.Text = "Key System"
-Subtitle.TextColor3 = Color3.fromRGB(140, 155, 180)
+Subtitle.TextColor3 = Color3.fromRGB(160, 175, 200)
 Subtitle.TextSize = 13
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.Parent = Card
@@ -386,13 +386,13 @@ Divider.Parent = Card
 local KeyBox = Instance.new("TextBox")
 KeyBox.Size = UDim2.new(0.8, 0, 0, 44)
 KeyBox.Position = UDim2.new(0.1, 0, 0, 178)
-KeyBox.BackgroundColor3 = Color3.fromRGB(35, 44, 68)
-KeyBox.BackgroundTransparency = 0.15
+KeyBox.BackgroundColor3 = Color3.fromRGB(50, 58, 82)
+KeyBox.BackgroundTransparency = 0.1
 KeyBox.BorderSizePixel = 0
 KeyBox.PlaceholderText = Translate("Введите ключ...")
-KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 115, 140)
+KeyBox.PlaceholderColor3 = Color3.fromRGB(120, 135, 160)
 KeyBox.Text = ""
-KeyBox.TextColor3 = Color3.fromRGB(240, 245, 255)
+KeyBox.TextColor3 = Color3.fromRGB(245, 248, 255)
 KeyBox.TextSize = 15
 KeyBox.Font = Enum.Font.Gotham
 KeyBox.ClearTextOnFocus = false
@@ -440,8 +440,8 @@ VerifyGrad.Rotation = 0
 local GetKeyBtn = Instance.new("TextButton")
 GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 40)
 GetKeyBtn.Position = UDim2.new(0.1, 0, 0, 320)
-GetKeyBtn.BackgroundColor3 = Color3.fromRGB(35, 44, 68)
-GetKeyBtn.BackgroundTransparency = 0.15
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(50, 58, 82)
+GetKeyBtn.BackgroundTransparency = 0.1
 GetKeyBtn.BorderSizePixel = 0
 GetKeyBtn.Text = Translate("Получить ключ")
 GetKeyBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
@@ -461,7 +461,7 @@ HintLabel.Size = UDim2.new(0.8, 0, 0, 18)
 HintLabel.Position = UDim2.new(0.1, 0, 0, 372)
 HintLabel.BackgroundTransparency = 1
 HintLabel.Text = CONFIG.Linkvertise ~= "" and Translate("Пройди Linkvertise → получи ключ") or Translate("Пока можно ввести имеющийся ключ KeyAuth")
-HintLabel.TextColor3 = Color3.fromRGB(110, 125, 150)
+HintLabel.TextColor3 = Color3.fromRGB(130, 145, 170)
 HintLabel.TextSize = 11
 HintLabel.Font = Enum.Font.Gotham
 HintLabel.Parent = Card
@@ -472,7 +472,7 @@ Footer.Size = UDim2.new(1, 0, 0, 18)
 Footer.Position = UDim2.new(0, 0, 0, 492)
 Footer.BackgroundTransparency = 1
 Footer.Text = "Feather · Scripter"
-Footer.TextColor3 = Color3.fromRGB(90, 105, 130)
+Footer.TextColor3 = Color3.fromRGB(110, 125, 150)
 Footer.TextSize = 11
 Footer.Font = Enum.Font.Gotham
 Footer.Parent = Card
@@ -744,7 +744,7 @@ MinimizeBtn.MouseButton1Click:Connect(function()
                 end
                 local Stroke = Desc:FindFirstChildOfClass("UIStroke")
                 if Stroke then
-                    local TargetTransparency = Stroke == CardStroke and 0.7 or (Stroke == LangStroke or Stroke == MinStroke) and 0.5 or Stroke == CloseStroke and 0.5 or 0
+                    local TargetTransparency = Stroke == CardStroke and 0.4 or (Stroke == LangStroke or Stroke == MinStroke or Stroke == CloseStroke) and 0.4 or 0
                     TweenService:Create(Stroke, TweenInfo.new(0.3), {Transparency = TargetTransparency}):Play()
                 end
                 local Grad = Desc:FindFirstChildOfClass("UIGradient")
@@ -798,10 +798,10 @@ local function HoverEffect(Button, OriginalColor, OriginalTransparency)
 end
 
 HoverEffect(VerifyBtn, Color3.fromRGB(125, 211, 252), 0)
-HoverEffect(GetKeyBtn, Color3.fromRGB(35, 44, 68), 0.15)
-HoverEffect(LanguageBtn, Color3.fromRGB(40, 50, 75), 0.2)
-HoverEffect(MinimizeBtn, Color3.fromRGB(40, 50, 75), 0.2)
-HoverEffect(CloseBtn, Color3.fromRGB(40, 50, 75), 0.2)
+HoverEffect(GetKeyBtn, Color3.fromRGB(50, 58, 82), 0.1)
+HoverEffect(LanguageBtn, Color3.fromRGB(70, 80, 108), 0.15)
+HoverEffect(MinimizeBtn, Color3.fromRGB(70, 80, 108), 0.15)
+HoverEffect(CloseBtn, Color3.fromRGB(70, 80, 108), 0.15)
 
 -- ════════════════════════════════════════════════════════════════
 -- ИНИЦИАЛИЗАЦИЯ KEYAUTH
