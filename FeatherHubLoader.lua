@@ -258,6 +258,43 @@ CardGrad.Color = ColorSequence.new({
 })
 CardGrad.Rotation = 135
 
+-- Кнопки управления окном
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+MinimizeBtn.Position = UDim2.new(1, -70, 0, 10)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(20, 28, 48)
+MinimizeBtn.BackgroundTransparency = 0.3
+MinimizeBtn.BorderSizePixel = 0
+MinimizeBtn.Text = "—"
+MinimizeBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
+MinimizeBtn.TextSize = 18
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = Card
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
+local MinStroke = Instance.new("UIStroke", MinimizeBtn)
+MinStroke.Color = Color3.fromRGB(125, 211, 252)
+MinStroke.Transparency = 0.5
+MinStroke.Thickness = 1
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -38, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(20, 28, 48)
+CloseBtn.BackgroundTransparency = 0.3
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(248, 113, 113)
+CloseBtn.TextSize = 14
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = Card
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+local CloseStroke = Instance.new("UIStroke", CloseBtn)
+CloseStroke.Color = Color3.fromRGB(248, 113, 113)
+CloseStroke.Transparency = 0.5
+CloseStroke.Thickness = 1
+
 -- Кнопка языка
 local LanguageBtn = Instance.new("TextButton")
 LanguageBtn.Name = "LanguageSwitch"
@@ -665,6 +702,71 @@ end)
 
 VerifyBtn.MouseButton1Click:Connect(DoVerify)
 
+-- Кнопка минимизации — сворачивает карточку
+local Minimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    Minimized = not Minimized
+    if Minimized then
+        -- Сворачиваем: оставляем только заголовок и кнопки управления
+        TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 420, 0, 60)
+        }):Play()
+        -- Скрываем все элементы кроме заголовка, иконки и кнопок управления
+        for _, Desc in ipairs(Card:GetDescendants()) do
+            if Desc:IsA("GuiObject") and Desc ~= Card and Desc ~= MinimizeBtn and Desc ~= CloseBtn and Desc ~= LanguageBtn and Desc ~= IconGlow and Desc ~= IconHolder and Desc ~= FeatherIcon and Desc ~= Title and Desc ~= Subtitle then
+                if Desc:IsA("TextLabel") or Desc:IsA("TextButton") or Desc:IsA("TextBox") then
+                    TweenService:Create(Desc, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+                end
+                if Desc:IsA("Frame") or Desc:IsA("TextButton") or Desc:IsA("TextBox") then
+                    TweenService:Create(Desc, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                end
+                local Stroke = Desc:FindFirstChildOfClass("UIStroke")
+                if Stroke then TweenService:Create(Stroke, TweenInfo.new(0.2), {Transparency = 1}):Play() end
+                local Grad = Desc:FindFirstChildOfClass("UIGradient")
+                if Grad then TweenService:Create(Grad, TweenInfo.new(0.2), {Transparency = 1}):Play() end
+            end
+        end
+        MinimizeBtn.Text = "□"
+    else
+        -- Разворачиваем
+        TweenService:Create(Card, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 420, 0, 520)
+        }):Play()
+        -- Показываем все элементы
+        for _, Desc in ipairs(Card:GetDescendants()) do
+            if Desc:IsA("GuiObject") and Desc ~= Card then
+                if Desc:IsA("TextLabel") or Desc:IsA("TextButton") or Desc:IsA("TextBox") then
+                    TweenService:Create(Desc, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+                end
+                local OrigTransparency = OriginalBg[Desc]
+                if OrigTransparency ~= nil then
+                    TweenService:Create(Desc, TweenInfo.new(0.3), {BackgroundTransparency = OrigTransparency}):Play()
+                end
+                local Stroke = Desc:FindFirstChildOfClass("UIStroke")
+                if Stroke then
+                    local TargetTransparency = Stroke == CardStroke and 0.7 or (Stroke == LangStroke or Stroke == MinStroke) and 0.5 or Stroke == CloseStroke and 0.5 or 0
+                    TweenService:Create(Stroke, TweenInfo.new(0.3), {Transparency = TargetTransparency}):Play()
+                end
+                local Grad = Desc:FindFirstChildOfClass("UIGradient")
+                if Grad then TweenService:Create(Grad, TweenInfo.new(0.3), {Transparency = 0}):Play() end
+            end
+        end
+        MinimizeBtn.Text = "—"
+    end
+end)
+
+-- Кнопка закрытия — полностью удаляет GUI
+CloseBtn.MouseButton1Click:Connect(function()
+    TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 100, 0, 100),
+        Position = UDim2.new(0.5, -50, 0.5, -50)
+    }):Play()
+    TweenService:Create(CardStroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+    task.delay(0.3, function()
+        if Gui and Gui.Parent then Gui:Destroy() end
+    end)
+end)
+
 KeyBox.FocusLost:Connect(function(entered)
     if entered then DoVerify() end
 end)
@@ -698,6 +800,8 @@ end
 HoverEffect(VerifyBtn, Color3.fromRGB(125, 211, 252), 0)
 HoverEffect(GetKeyBtn, Color3.fromRGB(15, 22, 38), 0.2)
 HoverEffect(LanguageBtn, Color3.fromRGB(20, 28, 48), 0.3)
+HoverEffect(MinimizeBtn, Color3.fromRGB(20, 28, 48), 0.3)
+HoverEffect(CloseBtn, Color3.fromRGB(20, 28, 48), 0.3)
 
 -- ════════════════════════════════════════════════════════════════
 -- ИНИЦИАЛИЗАЦИЯ KEYAUTH
