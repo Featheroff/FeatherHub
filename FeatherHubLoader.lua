@@ -238,6 +238,7 @@ local Card = Instance.new("Frame")
 Card.Size = UDim2.new(0, 420, 0, 520)
 Card.Position = UDim2.new(0.5, -210, 0.5, -260)
 Card.BackgroundColor3 = Color3.fromRGB(55, 62, 85)
+Card.BackgroundTransparency = 0
 Card.BorderSizePixel = 0
 Card.ClipsDescendants = true
 Card.Parent = Gui
@@ -249,12 +250,12 @@ CardStroke.Color = Color3.fromRGB(125, 211, 252)
 CardStroke.Transparency = 0.4
 CardStroke.Thickness = 1.5
 
--- Градиент карточки
+-- Градиент карточки (светлый)
 local CardGrad = Instance.new("UIGradient", Card)
 CardGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(65, 74, 100)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(55, 62, 85)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(45, 52, 72)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 112, 145)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 92, 122)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(65, 76, 105)),
 })
 CardGrad.Rotation = 135
 
@@ -263,8 +264,8 @@ local LanguageBtn = Instance.new("TextButton")
 LanguageBtn.Name = "LanguageSwitch"
 LanguageBtn.Size = UDim2.new(0, 72, 0, 26)
 LanguageBtn.Position = UDim2.new(0, 14, 0, 12)
-LanguageBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
-LanguageBtn.BackgroundTransparency = 0.15
+LanguageBtn.BackgroundColor3 = Color3.fromRGB(90, 102, 130)
+LanguageBtn.BackgroundTransparency = 0.1
 LanguageBtn.BorderSizePixel = 0
 LanguageBtn.Text = Language == "RU" and "RU / EN" or "ru / EN"
 LanguageBtn.TextColor3 = Color3.fromRGB(180, 220, 255)
@@ -282,8 +283,8 @@ local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
 MinimizeBtn.Position = UDim2.new(1, -72, 0, 10)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
-MinimizeBtn.BackgroundTransparency = 0.15
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(90, 102, 130)
+MinimizeBtn.BackgroundTransparency = 0.1
 MinimizeBtn.BorderSizePixel = 0
 MinimizeBtn.Text = "—"
 MinimizeBtn.TextColor3 = Color3.fromRGB(180, 220, 255)
@@ -300,8 +301,8 @@ local CloseBtn = Instance.new("TextButton")
 CloseBtn.Name = "CloseBtn"
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -36, 0, 10)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 108)
-CloseBtn.BackgroundTransparency = 0.15
+CloseBtn.BackgroundColor3 = Color3.fromRGB(90, 102, 130)
+CloseBtn.BackgroundTransparency = 0.1
 CloseBtn.BorderSizePixel = 0
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 130, 130)
@@ -327,7 +328,7 @@ Instance.new("UICorner", IconGlow).CornerRadius = UDim.new(1, 0)
 local IconHolder = Instance.new("Frame")
 IconHolder.Size = UDim2.new(0, 64, 0, 64)
 IconHolder.Position = UDim2.new(0.5, -32, 0, 20)
-IconHolder.BackgroundColor3 = Color3.fromRGB(65, 76, 105)
+IconHolder.BackgroundColor3 = Color3.fromRGB(85, 98, 128)
 IconHolder.BorderSizePixel = 0
 IconHolder.Parent = Card
 Instance.new("UICorner", IconHolder).CornerRadius = UDim.new(1, 0)
@@ -386,8 +387,8 @@ Divider.Parent = Card
 local KeyBox = Instance.new("TextBox")
 KeyBox.Size = UDim2.new(0.8, 0, 0, 44)
 KeyBox.Position = UDim2.new(0.1, 0, 0, 178)
-KeyBox.BackgroundColor3 = Color3.fromRGB(50, 58, 82)
-KeyBox.BackgroundTransparency = 0.1
+KeyBox.BackgroundColor3 = Color3.fromRGB(70, 82, 110)
+KeyBox.BackgroundTransparency = 0.05
 KeyBox.BorderSizePixel = 0
 KeyBox.PlaceholderText = Translate("Введите ключ...")
 KeyBox.PlaceholderColor3 = Color3.fromRGB(120, 135, 160)
@@ -440,8 +441,8 @@ VerifyGrad.Rotation = 0
 local GetKeyBtn = Instance.new("TextButton")
 GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 40)
 GetKeyBtn.Position = UDim2.new(0.1, 0, 0, 320)
-GetKeyBtn.BackgroundColor3 = Color3.fromRGB(50, 58, 82)
-GetKeyBtn.BackgroundTransparency = 0.1
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(70, 82, 110)
+GetKeyBtn.BackgroundTransparency = 0.05
 GetKeyBtn.BorderSizePixel = 0
 GetKeyBtn.Text = Translate("Получить ключ")
 GetKeyBtn.TextColor3 = Color3.fromRGB(125, 211, 252)
@@ -744,7 +745,7 @@ MinimizeBtn.MouseButton1Click:Connect(function()
                 end
                 local Stroke = Desc:FindFirstChildOfClass("UIStroke")
                 if Stroke then
-                    local TargetTransparency = Stroke == CardStroke and 0.4 or (Stroke == LangStroke or Stroke == MinStroke or Stroke == CloseStroke) and 0.4 or 0
+                    local TargetTransparency = Stroke == CardStroke and 0.4 or (Stroke == LangStroke or Stroke == MinStroke or Stroke == CloseStroke) and 0.35 or 0
                     TweenService:Create(Stroke, TweenInfo.new(0.3), {Transparency = TargetTransparency}):Play()
                 end
                 local Grad = Desc:FindFirstChildOfClass("UIGradient")
@@ -798,10 +799,10 @@ local function HoverEffect(Button, OriginalColor, OriginalTransparency)
 end
 
 HoverEffect(VerifyBtn, Color3.fromRGB(125, 211, 252), 0)
-HoverEffect(GetKeyBtn, Color3.fromRGB(50, 58, 82), 0.1)
-HoverEffect(LanguageBtn, Color3.fromRGB(70, 80, 108), 0.15)
-HoverEffect(MinimizeBtn, Color3.fromRGB(70, 80, 108), 0.15)
-HoverEffect(CloseBtn, Color3.fromRGB(70, 80, 108), 0.15)
+HoverEffect(GetKeyBtn, Color3.fromRGB(70, 82, 110), 0.05)
+HoverEffect(LanguageBtn, Color3.fromRGB(90, 102, 130), 0.1)
+HoverEffect(MinimizeBtn, Color3.fromRGB(90, 102, 130), 0.1)
+HoverEffect(CloseBtn, Color3.fromRGB(90, 102, 130), 0.1)
 
 -- ════════════════════════════════════════════════════════════════
 -- ИНИЦИАЛИЗАЦИЯ KEYAUTH
